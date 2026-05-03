@@ -121,6 +121,16 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .feature-list .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:8px}
 .feature{display:flex;align-items:flex-start;gap:.75rem;font-size:14.5px;color:var(--ink-soft);line-height:1.5}
 .feature svg{width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px}
+/* Animated reveal: text fades up first, then check stroke draws itself */
+.feature-list.animate-armed .feature span{opacity:0;transform:translateY(6px);will-change:opacity,transform}
+.feature-list.animate-armed .feature svg polyline{stroke-dasharray:30;stroke-dashoffset:30;stroke-linecap:round;stroke-linejoin:round}
+.feature-list.animate-go .feature span{animation:featureTextIn .28s cubic-bezier(.2,.7,.2,1) forwards}
+.feature-list.animate-go .feature svg polyline{animation:featureCheckDraw .32s cubic-bezier(.5,0,.5,1) forwards}
+@keyframes featureTextIn{to{opacity:1;transform:translateY(0)}}
+@keyframes featureCheckDraw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){
+  .feature-list.animate-armed .feature span,.feature-list.animate-armed .feature svg polyline{opacity:1;transform:none;stroke-dashoffset:0}
+}
 
 /* DETAILS */
 .details{padding:80px 32px 96px;max-width:var(--max);margin:0 auto}
@@ -442,6 +452,32 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     fetch('/api/founder-count').then(function(r){return r.json();}).then(function(j){
       if(typeof j.remaining==='number')el.textContent=j.remaining;
     }).catch(function(){});
+  })();
+
+  // What's-included feature list animation: text fades up, then check draws, staggered per row
+  (function(){
+    var list=document.querySelector('.feature-list');
+    if(!list)return;
+    var features=list.querySelectorAll('.feature');
+    if(!features.length)return;
+    list.classList.add('animate-armed');
+    var stagger=350;       // ms between rows
+    var checkOffset=180;   // ms - check starts after text
+    features.forEach(function(f,i){
+      var textDelay=(i*stagger)+'ms';
+      var checkDelay=(i*stagger+checkOffset)+'ms';
+      var span=f.querySelector('span');
+      if(span)span.style.animationDelay=textDelay;
+      var poly=f.querySelector('svg polyline');
+      if(poly)poly.style.animationDelay=checkDelay;
+    });
+    function fire(){list.classList.add('animate-go');}
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(entries){
+        entries.forEach(function(e){if(e.isIntersecting){fire();io.disconnect();}});
+      },{threshold:0.18});
+      io.observe(list);
+    }else{fire();}
   })();
 })();
 </script>
