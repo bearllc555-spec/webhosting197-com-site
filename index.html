@@ -80,6 +80,8 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .pricing-section{padding:64px 32px 24px;max-width:var(--max);margin:0 auto}
 .pricing-card{background:var(--bg);border:1px solid var(--rule);border-radius:20px;padding:48px;max-width:520px;margin:0 auto;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.02),0 8px 32px rgba(0,0,0,.04)}
 .pricing-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--blue);background:var(--blue-soft);padding:.32rem .72rem;border-radius:999px;margin-bottom:24px}
+.price-was-big{font-size:32px;font-weight:600;color:var(--slate);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:#B0B0B6;letter-spacing:-.025em;line-height:1;margin-bottom:8px;display:inline-block}
+.founder-remaining{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
 .price-display{display:flex;align-items:baseline;gap:0;margin-bottom:6px}
 .price-currency{font-size:36px;font-weight:600;color:var(--ink);letter-spacing:-.03em;line-height:1}
 .price-amount{font-size:84px;font-weight:600;color:var(--ink);letter-spacing:-.045em;line-height:.95}
@@ -173,12 +175,13 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 <section class="pricing-section" id="pricing">
   <div class="pricing-card">
     <span class="pricing-tag">lifetime</span>
+    <div class="price-was-big">$197</div>
     <div class="price-display">
       <span class="price-currency">$</span>
-      <span class="price-amount">197</span>
+      <span class="price-amount">147</span>
       <span class="price-suffix">once</span>
     </div>
-    <p class="price-detail">Founder pricing for the first 50.</p>
+    <p class="price-detail">Founder pricing &middot; <span class="founder-remaining" id="founderRemaining">50</span> of 50 spots left.</p>
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
     <!-- State 1: email entry -->
     <div class="reserve-state active" id="state1">
@@ -313,7 +316,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   // Count-up $197 when it scrolls into view
   var amt=document.querySelector('.price-amount');
   if(amt){
-    var target=parseInt(amt.textContent,10)||197;
+    var target=parseInt(amt.textContent,10)||147;
     var startVal=999;
     var fired=false;
     function run(){
@@ -430,6 +433,15 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
   if(resendBack){resendBack.addEventListener('click',function(){showState(1);setTimeout(function(){emailInput.focus();},80);});}
   if(codeInput){codeInput.addEventListener('input',function(e){var v=e.target.value.replace(/\D/g,'');if(v!==e.target.value)e.target.value=v;});}
+
+  // Live founder spot counter
+  (function(){
+    var el=document.getElementById('founderRemaining');
+    if(!el)return;
+    fetch('/api/founder-count').then(function(r){return r.json();}).then(function(j){
+      if(typeof j.remaining==='number')el.textContent=j.remaining;
+    }).catch(function(){});
+  })();
 })();
 </script>
 
