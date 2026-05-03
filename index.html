@@ -455,22 +455,26 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     }).catch(function(){});
   })();
 
-  // What's-included feature list: letter-by-letter typewriter (matches H1 style), then check draws
+  // What's-included: strictly sequential cascade. Each line types out letter-by-letter, check appears, THEN next line starts.
   (function(){
     var list=document.querySelector('.feature-list');
     if(!list)return;
     var features=list.querySelectorAll('.feature');
     if(!features.length)return;
     list.classList.add('animate-armed');
-    var letterStagger=12;     // ms per letter within a line
-    var lineStartGap=350;     // ms between line starts (overlap allowed)
-    var checkOffset=80;       // ms after a line's last letter, check draws
-    features.forEach(function(f,i){
+    var letterStagger=14;     // ms between letters within a line (slow, readable typewriter)
+    var letterDuration=420;   // ms each letter takes to animate (matches CSS .42s)
+    var checkOffset=50;       // ms gap after last letter is fully revealed
+    var checkDuration=320;    // ms check stroke draw (matches CSS .32s)
+    var lineGap=100;          // ms gap after a line's check finishes before next line starts
+
+    var cumulative=0;
+    features.forEach(function(f){
       var span=f.querySelector('span');
       if(!span)return;
       var text=span.textContent;
       span.textContent='';
-      var lineStart=i*lineStartGap;
+      var lineStart=cumulative;
       var letterIdx=0;
       var tokens=text.split(/(\s+)/);
       tokens.forEach(function(tok){
@@ -494,10 +498,14 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
         }
         span.appendChild(word);
       });
-      var checkDelay=(lineStart+letterIdx*letterStagger+checkOffset)+'ms';
+      // Time when this line's last letter is fully revealed:
+      var textFullyRevealed=lineStart + Math.max(0,(letterIdx-1)*letterStagger) + letterDuration;
+      var checkDelay=textFullyRevealed + checkOffset;
       var poly=f.querySelector('svg polyline');
-      if(poly)poly.style.animationDelay=checkDelay;
+      if(poly)poly.style.animationDelay=checkDelay+'ms';
+      cumulative=checkDelay + checkDuration + lineGap;
     });
+
     function fire(){list.classList.add('animate-go');}
     if('IntersectionObserver' in window){
       var io=new IntersectionObserver(function(entries){
