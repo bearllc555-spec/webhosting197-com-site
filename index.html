@@ -56,11 +56,34 @@ img{max-width:100%;display:block}
 .btn-ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
 .btn-ghost:hover{background:var(--bg-card)}
 .btn svg{width:13px;height:13px}
+/* Hamburger button (mobile only) */
+.topnav-burger{display:none;background:none;border:0;padding:8px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.topnav-burger span{display:block;width:22px;height:2px;background:var(--ink);border-radius:2px;margin:4px 0;transition:transform .25s ease,opacity .2s ease}
+body.menu-open .topnav-burger span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+body.menu-open .topnav-burger span:nth-child(2){opacity:0}
+body.menu-open .topnav-burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* Mobile menu drawer */
+.mobile-menu{position:fixed;inset:0;background:var(--bg);z-index:100;padding:88px 32px 32px;visibility:hidden;opacity:0;transition:opacity .22s ease,visibility .22s ease;overflow-y:auto}
+.mobile-menu.open{visibility:visible;opacity:1}
+.mobile-menu-close{position:absolute;top:18px;right:18px;background:none;border:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--ink);cursor:pointer;border-radius:8px}
+.mobile-menu-close svg{width:22px;height:22px}
+.mobile-menu-close:hover{background:var(--bg-card)}
+.mobile-menu-nav{display:flex;flex-direction:column;gap:0;max-width:480px;margin:0 auto}
+.mobile-menu-link{font-size:22px;font-weight:600;color:var(--ink);padding:20px 0;border-bottom:1px solid var(--rule);text-decoration:none;display:block;letter-spacing:-.02em}
+.mobile-menu-link:hover{color:var(--blue)}
+.mobile-menu-cta{display:flex;align-items:center;justify-content:space-between;margin-top:28px;background:var(--blue);color:#fff;padding:18px 22px;border-radius:12px;font-size:17px;font-weight:600;text-decoration:none;letter-spacing:-.01em}
+.mobile-menu-cta:hover{background:var(--blue-deep)}
+.mobile-menu-cta svg{width:14px;height:14px}
+
 @media(max-width:600px){
   .topnav-inner{padding:14px 20px}
   .brand{font-size:18px}
-  .topnav-right{gap:.75rem}
-  .topnav-link{display:none}
+  .topnav-right{display:none}
+  .topnav-burger{display:block}
+}
+@media(min-width:601px){
+  .mobile-menu{display:none}
 }
 
 /* HERO */
@@ -220,8 +243,23 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       <a href="#faq" class="topnav-link">Questions</a>
       <a href="#pricing" class="btn btn-primary" id="navReserveBtn">Get notified <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
     </div>
+    <button class="topnav-burger" id="topnavBurger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
+
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <nav class="mobile-menu-nav">
+    <a href="#pricing" class="mobile-menu-link">Pricing</a>
+    <a href="#how" class="mobile-menu-link">How it works</a>
+    <a href="#faq" class="mobile-menu-link">Questions</a>
+    <a href="#pricing" class="mobile-menu-cta" id="mobileMenuReserveBtn">Get notified <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+  </nav>
+</div>
 
 <section class="hero">
   <div class="eyebrow"><span class="dot"></span>Launching 2026</div>
@@ -621,6 +659,46 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       },{threshold:0.18});
       io.observe(list);
     }else{fire();}
+  })();
+
+  // Mobile menu hamburger toggle
+  (function(){
+    var burger=document.getElementById('topnavBurger');
+    var menu=document.getElementById('mobileMenu');
+    var closeBtn=document.getElementById('mobileMenuClose');
+    if(!burger||!menu)return;
+    function openMenu(){
+      menu.classList.add('open');
+      menu.setAttribute('aria-hidden','false');
+      burger.setAttribute('aria-expanded','true');
+      document.body.classList.add('menu-open');
+      document.body.style.overflow='hidden';
+    }
+    function closeMenu(){
+      menu.classList.remove('open');
+      menu.setAttribute('aria-hidden','true');
+      burger.setAttribute('aria-expanded','false');
+      document.body.classList.remove('menu-open');
+      document.body.style.overflow='';
+    }
+    burger.addEventListener('click',openMenu);
+    if(closeBtn)closeBtn.addEventListener('click',closeMenu);
+    // Close menu when any link inside is clicked
+    menu.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click',function(){
+        // If it's the Get-notified CTA, also focus the email input after scroll
+        var isCta=a.classList.contains('mobile-menu-cta');
+        closeMenu();
+        if(isCta){
+          var emailInput=document.getElementById('emailInput');
+          if(emailInput)setTimeout(function(){emailInput.focus({preventScroll:true});},700);
+        }
+      });
+    });
+    // Close on Escape
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&menu.classList.contains('open'))closeMenu();
+    });
   })();
 })();
 </script>
