@@ -415,12 +415,6 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
         .then(function(r){
           clearBusy(codeBtn);
           if(r.res.ok && r.j.ok){
-            var fd=new FormData();
-            fd.append('email',currentEmail);
-            fd.append('source','webhosting197.com');
-            fd.append('_subject','webhosting197 launch list signup (verified)');
-            fd.append('verified','true');
-            fetch('https://formspree.io/f/xjgjwobq',{method:'POST',headers:{'Accept':'application/json'},body:fd}).catch(function(){});
             if(successEmail)successEmail.textContent=currentEmail;
             showState(3);
           }else{
