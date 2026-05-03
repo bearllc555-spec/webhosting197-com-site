@@ -103,8 +103,11 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .reserve-step-meta strong{color:var(--ink);font-weight:600}
 .reserve-back{display:inline-flex;align-items:center;gap:.3rem;font-size:13px;color:var(--blue);font-weight:500;margin-top:14px;cursor:pointer;background:none;border:none;padding:0;font-family:inherit}
 .reserve-back:hover{color:var(--blue-deep);text-decoration:underline}
-.reserve-success{display:none;margin-top:4px;padding:.85rem 1rem;background:var(--blue-soft);color:var(--blue-deep);border-radius:10px;font-size:14.5px;font-weight:500;line-height:1.45;border:1px solid rgba(37,99,235,.18)}
-.reserve-success.show{display:block}
+.reserve-success{display:none;margin-top:4px;padding:.85rem 1rem;background:var(--blue-soft);color:var(--blue-deep);border-radius:10px;font-size:14.5px;font-weight:500;line-height:1.45;border:1px solid rgba(37,99,235,.18);align-items:center;gap:14px}
+.reserve-success.show{display:flex}
+.reserve-success-text{flex:1;min-width:0}
+.reserve-success-check{width:36px;height:36px;flex-shrink:0;background:#10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(16,185,129,.25)}
+.reserve-success-check svg{width:18px;height:18px;color:#fff;display:block}
 .reserve-error{display:none;margin-top:8px;font-size:13.5px;color:#B91C1C}
 .reserve-error.show{display:block}
 .reserve-note{font-size:12.5px;color:var(--slate);margin-top:10px}
@@ -200,7 +203,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
     <!-- State 3: success -->
     <div class="reserve-state" id="state3">
-      <div class="reserve-success show">You&rsquo;re on the launch list. We&rsquo;ll email <strong id="successEmail"></strong> the moment we open.</div>
+      <div class="reserve-success show"><div class="reserve-success-text">You&rsquo;re on the launch list. We&rsquo;ll email <strong id="successEmail"></strong> the moment we open.</div><div class="reserve-success-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div></div>
       <p class="reserve-note">Founder pricing locked in for the first 50 confirmed signups.</p>
     </div>
 
