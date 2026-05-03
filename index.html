@@ -192,7 +192,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     <div class="reserve-state" id="state2">
       <p class="reserve-step-meta">We sent a 6-digit code to <strong id="codeEmailDisplay"></strong>. Check your inbox (and spam, just in case).</p>
       <form class="reserve-form stacked" id="codeForm" novalidate>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="reserve-input code-input" id="codeInput" required>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="" class="reserve-input code-input" id="codeInput" required>
         <button type="submit" class="btn btn-primary" id="codeBtn">Confirm and reserve <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
       </form>
       <button type="button" class="reserve-back" id="resendBack">&larr; Use a different email or resend code</button>
