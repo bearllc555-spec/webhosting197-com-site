@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>webhosting197 — Lifetime cloud web hosting. $197. With AI.</title>
+<meta name="description" content="One payment. One website. Forever-on cloud hosting. AI to build it, AI to keep it running. Launching 2026.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://webhosting197.com/">
+<meta property="og:title" content="webhosting197 — Lifetime cloud web hosting. $197. With AI.">
+<meta property="og:description" content="One payment. One website. Forever-on cloud hosting. AI to build it, AI to keep it running. Launching 2026.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://webhosting197.com/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF;
+  --bg-soft:#FAFAFA;
+  --bg-card:#F7F7F5;
+  --ink:#1C1B1F;
+  --ink-soft:#5C5C66;
+  --slate:#85858C;
+  --rule:#E8E8E8;
+  --rule-soft:#F0F0F0;
+  --blue:#2563EB;
+  --blue-deep:#1D4ED8;
+  --blue-soft:#EFF6FF;
+  --emerald:#059669;
+  --max:1080px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";letter-spacing:-.005em}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+
+/* TOPNAV - Mercury-style, sticky, blurred */
+.topnav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid transparent;transition:border-color .25s}
+.topnav.scrolled{border-bottom-color:var(--rule)}
+.topnav-inner{max-width:var(--max);margin:0 auto;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.brand{display:inline-flex;align-items:baseline;gap:.04em;font-weight:800;font-size:21px;letter-spacing:-.04em;color:var(--ink);line-height:1}
+.brand-text{color:var(--ink)}
+.brand-num{color:var(--blue);font-weight:800;letter-spacing:-.05em;position:relative;display:inline-block}
+.brand-slash{color:var(--ink);font-weight:800;letter-spacing:-.05em;margin-right:.04em}
+.topnav-right{display:flex;align-items:center;gap:1.25rem}
+.topnav-link{font-weight:500;font-size:14px;color:var(--ink-soft);transition:color .15s}
+.topnav-link:hover{color:var(--ink)}
+
+/* BUTTONS - Mercury-clean, blue accent */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1.05rem;font-weight:500;font-size:14px;border-radius:8px;transition:background .15s,color .15s,border-color .15s,transform .12s,box-shadow .15s;border:1px solid transparent;white-space:nowrap;cursor:pointer;font-family:inherit}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue-deep);border-color:var(--blue-deep);box-shadow:0 4px 14px rgba(37,99,235,.22)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn-ghost:hover{background:var(--bg-card)}
+.btn svg{width:13px;height:13px}
+@media(max-width:600px){
+  .topnav-inner{padding:14px 20px}
+  .brand{font-size:18px}
+  .topnav-right{gap:.75rem}
+  .topnav-link{display:none}
+}
+
+/* HERO */
+.hero{padding:96px 32px 32px;text-align:center;max-width:var(--max);margin:0 auto}
+.eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;background:var(--bg-card);border:1px solid var(--rule);border-radius:999px;font-size:12.5px;font-weight:500;color:var(--ink-soft);margin-bottom:32px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);animation:dotPulse 2.4s ease-out infinite}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-height:1.02;color:var(--ink);max-width:18ch;margin:0 auto}
+.h1-reveal .word{display:inline-block;white-space:nowrap}
+.h1-reveal .space{display:inline-block}
+.h1-reveal .letter{display:inline-block;opacity:0;filter:blur(8px);transform:translateY(8px);animation:letterIn .55s cubic-bezier(.2,.7,.2,1) forwards;will-change:opacity,filter,transform}
+@keyframes letterIn{to{opacity:1;filter:blur(0);transform:translateY(0)}}
+.price-amount.counting{font-variant-numeric:tabular-nums}
+@media(prefers-reduced-motion:reduce){.h1-reveal .letter{opacity:1;filter:none;transform:none;animation:none}}
+.lead{font-size:clamp(16px,1.4vw,19px);color:var(--ink-soft);max-width:54ch;line-height:1.55;margin:24px auto 0}
+
+/* PRICING CARD */
+.pricing-section{padding:64px 32px 24px;max-width:var(--max);margin:0 auto}
+.pricing-card{background:var(--bg);border:1px solid var(--rule);border-radius:20px;padding:48px;max-width:520px;margin:0 auto;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.02),0 8px 32px rgba(0,0,0,.04)}
+.pricing-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--blue);background:var(--blue-soft);padding:.32rem .72rem;border-radius:999px;margin-bottom:24px}
+.price-was{font-size:22px;font-weight:500;color:var(--slate);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--slate);letter-spacing:-.02em;line-height:1;margin-bottom:6px}
+.price-display{display:flex;align-items:baseline;gap:0;margin-bottom:6px}
+.price-currency{font-size:36px;font-weight:600;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.price-amount{font-size:84px;font-weight:600;color:var(--ink);letter-spacing:-.045em;line-height:.95}
+.price-suffix{font-size:18px;color:var(--ink-soft);font-weight:500;margin-left:0}
+.price-detail{font-size:14px;color:var(--slate);margin-bottom:28px}
+.price-desc{font-size:15.5px;color:var(--ink-soft);line-height:1.55;margin-bottom:32px}
+.pricing-card .btn-primary{padding:.85rem 1.4rem;font-size:15px;font-weight:600;border-radius:10px;width:100%;justify-content:center}
+.reserve-form{display:flex;gap:8px;margin-top:4px}
+.reserve-form .reserve-input{flex:1;min-width:0;padding:.85rem 1rem;font-family:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:10px;outline:none;transition:border-color .15s,box-shadow .15s}
+.reserve-form .reserve-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.reserve-form .reserve-input::placeholder{color:var(--slate)}
+.reserve-form .btn-primary{padding:.85rem 1.4rem;font-size:15px;font-weight:600;border-radius:10px;justify-content:center;flex-shrink:0;width:auto}
+.reserve-form .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.reserve-success{display:none;margin-top:4px;padding:.85rem 1rem;background:var(--blue-soft);color:var(--blue-deep);border-radius:10px;font-size:14.5px;font-weight:500;line-height:1.45;border:1px solid rgba(37,99,235,.18)}
+.reserve-success.show{display:block}
+.reserve-error{display:none;margin-top:8px;font-size:13.5px;color:#B91C1C}
+.reserve-error.show{display:block}
+.reserve-note{font-size:12.5px;color:var(--slate);margin-top:10px}
+@media(max-width:520px){
+  .reserve-form{flex-direction:column;gap:10px}
+  .reserve-form .btn-primary{width:100%}
+}
+.feature-list{margin-top:32px;padding-top:32px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:14px}
+.feature-list .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:8px}
+.feature{display:flex;align-items:flex-start;gap:.75rem;font-size:14.5px;color:var(--ink-soft);line-height:1.5}
+.feature svg{width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px}
+
+/* DETAILS */
+.details{padding:80px 32px 96px;max-width:var(--max);margin:0 auto}
+.details-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.detail-item h3{font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:10px;letter-spacing:-.01em}
+.detail-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6}
+@media(max-width:760px){.details-grid{grid-template-columns:1fr;gap:28px}}
+
+/* FAQ */
+.faq{padding:24px 32px 96px;max-width:760px;margin:0 auto;border-top:1px solid var(--rule)}
+.faq h2{font-size:24px;font-weight:600;color:var(--ink);margin:48px 0 24px;letter-spacing:-.02em}
+.faq-item{padding:22px 0;border-bottom:1px solid var(--rule)}
+.faq-item:last-child{border-bottom:0}
+.faq-item h3{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.faq-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6}
+
+/* FOOTER */
+.foot{border-top:1px solid var(--rule);padding:32px;color:var(--slate);font-size:13px;text-align:center}
+.foot a{color:var(--ink-soft);text-decoration:none}
+.foot a:hover{color:var(--ink)}
+.foot-tag{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-top:6px}
+
+@media(max-width:600px){
+  .hero{padding:56px 20px 24px}
+  .pricing-section{padding:32px 20px 16px}
+  .pricing-card{padding:32px 24px;border-radius:16px}
+  .price-amount{font-size:64px}
+  .price-currency{font-size:28px}
+  .details{padding:56px 20px 64px}
+  .faq{padding:24px 20px 64px}
+}
+</style>
+</head>
+<body>
+
+<header class="topnav" id="topnav">
+  <div class="topnav-inner">
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span></a>
+    <div class="topnav-right">
+      <a href="#pricing" class="topnav-link">Pricing</a>
+      <a href="#how" class="topnav-link">How it works</a>
+      <a href="#pricing" class="btn btn-primary" id="navReserveBtn">Get notified <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow"><span class="dot"></span>Launching 2026</div>
+  <h1>lifetime cloud hosting, priced once.</h1>
+  <p class="lead">One payment. One website. Forever-on edge hosting on the same network the Fortune 500 runs on. AI to build it, run it, and keep it current.</p>
+</section>
+
+<section class="pricing-section" id="pricing">
+  <div class="pricing-card">
+    <span class="pricing-tag">lifetime</span>
+    <div class="price-was">$297</div>
+    <div class="price-display">
+      <span class="price-currency">$</span>
+      <span class="price-amount">197</span>
+      <span class="price-suffix">once</span>
+    </div>
+    <p class="price-detail">Founder pricing for the first 50. $297 after.</p>
+    <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
+    <form class="reserve-form" id="reserveForm" action="https://formspree.io/f/xjgjwobq" method="POST" novalidate>
+      <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" class="reserve-input" id="reserveEmail">
+      <input type="hidden" name="source" value="webhosting197.com">
+      <input type="hidden" name="_subject" value="webhosting197 launch list signup">
+      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none">
+      <button type="submit" class="btn btn-primary" id="reserveBtn">Reserve at launch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>
+    </form>
+    <div class="reserve-error" id="reserveError"></div>
+    <div class="reserve-success" id="reserveSuccess">You’re on the launch list. We’ll email <strong id="reserveSuccessEmail"></strong> the moment we open.</div>
+    <p class="reserve-note">No spam. One email at launch. Unsubscribe anytime.</p>
+    <div class="feature-list">
+      <div class="label">What's included</div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Forever-on hosting on a globally distributed edge network</span>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>SSL included; renews automatically for life</span>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>AI to build the site to your spec</span>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>AI to keep content fresh as your business changes</span>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>No monthly bill. Ever.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="details" id="how">
+  <div class="details-grid">
+    <div class="detail-item">
+      <h3>Built like a domain.</h3>
+      <p>You buy a domain once and own it. Hosting should work the same way. $197 once and the site is yours, hosted forever.</p>
+    </div>
+    <div class="detail-item">
+      <h3>Run on the Fortune 500's network.</h3>
+      <p>Your site lives on the same edge infrastructure that the world's largest sites run on, scaled to one website with predictable economics.</p>
+    </div>
+    <div class="detail-item">
+      <h3>AI keeps it alive.</h3>
+      <p>AI builds the initial site, patches it, and rewrites copy as your hours, services, or pricing change. You don't touch the dashboard unless you want to.</p>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <h2>Common questions</h2>
+  <div class="faq-item">
+    <h3>What does $197 actually include?</h3>
+    <p>One website, hosted forever on edge infrastructure, with SSL, an AI-built initial site, and AI maintenance for content updates. Domain registration is separate (~$15/yr at any registrar). No upsells, no monthly fees.</p>
+  </div>
+  <div class="faq-item">
+    <h3>What happens if my business changes?</h3>
+    <p>Tell the AI. It rewrites the site for you — new services, new hours, new pricing, new photos. Your hosting plan doesn't change.</p>
+  </div>
+  <div class="faq-item">
+    <h3>When does it launch?</h3>
+    <p>2026. Reserve a spot at launch and we will email you the day it opens with first-50 founder pricing locked in.</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <div>webhosting197.com &copy; 2026</div>
+  <div class="foot-tag">Another SlatePress company</div>
+</footer>
+
+<script>
+(function(){
+  var nav=document.getElementById('topnav');
+  function onScroll(){nav.classList.toggle('scrolled',window.scrollY>4)}
+  document.addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+
+  // Letter-by-letter H1 reveal — group by word so words wrap as units
+  var h1=document.querySelector('.hero h1');
+  if(h1){
+    var text=h1.textContent;
+    h1.textContent='';
+    h1.classList.add('h1-reveal');
+    var tokens=text.split(/(\s+)/); // keep whitespace tokens as separators
+    var i=0;
+    for(var t=0;t<tokens.length;t++){
+      var tok=tokens[t];
+      if(tok===''){continue;}
+      if(/^\s+$/.test(tok)){
+        // render whitespace as a non-animated space between word groups
+        var sp=document.createElement('span');
+        sp.className='space';
+        sp.innerHTML='&nbsp;';
+        h1.appendChild(sp);
+        continue;
+      }
+      var word=document.createElement('span');
+      word.className='word';
+      for(var k=0;k<tok.length;k++){
+        var letter=document.createElement('span');
+        letter.className='letter';
+        letter.textContent=tok.charAt(k);
+        letter.style.animationDelay=(i*28)+'ms';
+        word.appendChild(letter);
+        i++;
+      }
+      h1.appendChild(word);
+    }
+  }
+
+  // Count-up $197 when it scrolls into view
+  var amt=document.querySelector('.price-amount');
+  if(amt){
+    var target=parseInt(amt.textContent,10)||197;
+    var startVal=999;
+    var fired=false;
+    function run(){
+      if(fired)return;fired=true;
+      amt.classList.add('counting');
+      var t0=performance.now(),dur=1600;
+      amt.textContent=String(startVal);
+      function tick(now){
+        var p=Math.min(1,(now-t0)/dur);
+        // easeOutQuint - heavy slowdown as it approaches the final value
+        var e=1-Math.pow(1-p,5);
+        var v=Math.round(startVal-(startVal-target)*e);
+        amt.textContent=v;
+        if(p<1)requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+    if('IntersectionObserver' in window){
+      var io=new IntersectionObserver(function(entries){
+        entries.forEach(function(e){if(e.isIntersecting){run();io.disconnect();}});
+      },{threshold:0.4});
+      io.observe(amt);
+    }else{run();}
+  }
+
+
+  // Topnav Get notified -> scroll to #pricing and focus the email input
+  var navBtn=document.getElementById('navReserveBtn');
+  var emailInput=document.getElementById('reserveEmail');
+  if(navBtn && emailInput){
+    navBtn.addEventListener('click',function(e){
+      e.preventDefault();
+      var card=document.getElementById('pricing');
+      if(card){card.scrollIntoView({behavior:'smooth',block:'start'});}
+      setTimeout(function(){emailInput.focus({preventScroll:true});},650);
+    });
+  }
+
+  // Reserve at launch -> Formspree AJAX submit
+  var form=document.getElementById('reserveForm');
+  var btn=document.getElementById('reserveBtn');
+  var success=document.getElementById('reserveSuccess');
+  var successEmail=document.getElementById('reserveSuccessEmail');
+  var errBox=document.getElementById('reserveError');
+  if(form){
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+      errBox.classList.remove('show');
+      errBox.textContent='';
+      var data=new FormData(form);
+      var email=(data.get('email')||'').trim();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        errBox.textContent='Please enter a valid email address.';
+        errBox.classList.add('show');
+        return;
+      }
+      btn.disabled=true;
+      var origLabel=btn.innerHTML;
+      btn.innerHTML='Reserving…';
+      fetch(form.action,{
+        method:'POST',
+        headers:{'Accept':'application/json'},
+        body:data
+      }).then(function(res){
+        if(res.ok){
+          form.style.display='none';
+          if(successEmail){successEmail.textContent=email;}
+          success.classList.add('show');
+        }else{
+          return res.json().then(function(j){
+            var msg=(j && j.errors && j.errors[0] && j.errors[0].message) ? j.errors[0].message : 'Something went wrong. Please try again.';
+            errBox.textContent=msg;
+            errBox.classList.add('show');
+            btn.disabled=false;
+            btn.innerHTML=origLabel;
+          }).catch(function(){
+            errBox.textContent='Something went wrong. Please try again.';
+            errBox.classList.add('show');
+            btn.disabled=false;
+            btn.innerHTML=origLabel;
+          });
+        }
+      }).catch(function(){
+        errBox.textContent='Network error. Please check your connection and try again.';
+        errBox.classList.add('show');
+        btn.disabled=false;
+        btn.innerHTML=origLabel;
+      });
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>
