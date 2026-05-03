@@ -89,7 +89,8 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 @keyframes priceFlash{0%{transform:scale(1);color:var(--ink)}40%{transform:scale(1.06);color:var(--blue)}100%{transform:scale(1);color:var(--ink)}}
 .price-amount.flash{animation:priceFlash 420ms cubic-bezier(.4,0,.2,1)}
 .price-suffix{font-size:18px;color:var(--ink-soft);font-weight:500;margin-left:-4px}
-.price-detail{font-size:14px;color:var(--slate);margin-bottom:28px}
+.price-detail{font-size:14px;color:var(--slate);margin-bottom:6px}
+.price-aftermath{font-size:12.5px;color:var(--slate);opacity:.8;margin-bottom:28px;font-style:italic}
 .price-desc{font-size:15.5px;color:var(--ink-soft);line-height:1.55;margin-bottom:32px}
 .pricing-card .btn-primary{padding:.85rem 1.4rem;font-size:15px;font-weight:600;border-radius:10px;width:100%;justify-content:center}
 .reserve-form{display:flex;gap:8px;margin-top:4px}
@@ -238,6 +239,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       <span class="price-suffix">once</span>
     </div>
     <p class="price-detail">Founder pricing &middot; <span class="founder-remaining" id="founderRemaining">50</span> of 50 spots left.</p>
+    <p class="price-aftermath">Standard price after the first 50: $197.</p>
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
     <!-- State 1: email entry -->
     <div class="reserve-state active" id="state1">
