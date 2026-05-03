@@ -179,16 +179,32 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     </div>
     <p class="price-detail">Founder pricing for the first 50. $297 after.</p>
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
-    <form class="reserve-form" id="reserveForm" action="https://formspree.io/f/xjgjwobq" method="POST" novalidate>
-      <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" class="reserve-input" id="reserveEmail">
-      <input type="hidden" name="source" value="webhosting197.com">
-      <input type="hidden" name="_subject" value="webhosting197 launch list signup">
-      <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none">
-      <button type="submit" class="btn btn-primary" id="reserveBtn">Reserve at launch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>
-    </form>
+    <!-- State 1: email entry -->
+    <div class="reserve-state active" id="state1">
+      <form class="reserve-form" id="emailForm" novalidate>
+        <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" class="reserve-input" id="emailInput">
+        <button type="submit" class="btn btn-primary" id="emailBtn">Reserve at launch <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>
+      </form>
+      <p class="reserve-note">We&rsquo;ll email you a 6-digit code to confirm. No spam.</p>
+    </div>
+
+    <!-- State 2: code entry -->
+    <div class="reserve-state" id="state2">
+      <p class="reserve-step-meta">We sent a 6-digit code to <strong id="codeEmailDisplay"></strong>. Check your inbox (and spam, just in case).</p>
+      <form class="reserve-form stacked" id="codeForm" novalidate>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="reserve-input code-input" id="codeInput" required>
+        <button type="submit" class="btn btn-primary" id="codeBtn">Confirm and reserve <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
+      </form>
+      <button type="button" class="reserve-back" id="resendBack">&larr; Use a different email or resend code</button>
+    </div>
+
+    <!-- State 3: success -->
+    <div class="reserve-state" id="state3">
+      <div class="reserve-success show">You&rsquo;re on the launch list. We&rsquo;ll email <strong id="successEmail"></strong> the moment we open.</div>
+      <p class="reserve-note">Founder pricing locked in for the first 50 confirmed signups.</p>
+    </div>
+
     <div class="reserve-error" id="reserveError"></div>
-    <div class="reserve-success" id="reserveSuccess">You&rsquo;re on the launch list. We&rsquo;ll email <strong id="reserveSuccessEmail"></strong> the moment we open.</div>
-    <p class="reserve-note">No spam. One email at launch. Founder pricing for the first 50 confirmed signups.</p>
     <div class="feature-list">
       <div class="label">What's included</div>
       <div class="feature">
@@ -335,48 +351,90 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     });
   }
 
-  // Reserve at launch -> Formspree AJAX submit
-  var form=document.getElementById('reserveForm');
-  var btn=document.getElementById('reserveBtn');
-  var success=document.getElementById('reserveSuccess');
-  var successEmail=document.getElementById('reserveSuccessEmail');
+  // Three-state reservation flow: email -> SendGrid OTP -> verify cookie -> Formspree
+  var emailForm=document.getElementById('emailForm');
+  var emailInput=document.getElementById('emailInput');
+  var emailBtn=document.getElementById('emailBtn');
+  var codeForm=document.getElementById('codeForm');
+  var codeInput=document.getElementById('codeInput');
+  var codeBtn=document.getElementById('codeBtn');
+  var codeEmailDisplay=document.getElementById('codeEmailDisplay');
+  var successEmail=document.getElementById('successEmail');
+  var resendBack=document.getElementById('resendBack');
+  var state1=document.getElementById('state1');
+  var state2=document.getElementById('state2');
+  var state3=document.getElementById('state3');
   var errBox=document.getElementById('reserveError');
+  var currentEmail='';
 
-  if(form){
-    form.addEventListener('submit',function(e){
+  function showState(n){
+    [state1,state2,state3].forEach(function(s,i){if(s)s.classList.toggle('active',(i+1)===n);});
+    if(errBox){errBox.classList.remove('show');errBox.textContent='';}
+  }
+  function setBusy(b,label){b.disabled=true;b.dataset.origLabel=b.innerHTML;b.innerHTML=label;}
+  function clearBusy(b){b.disabled=false;if(b.dataset.origLabel)b.innerHTML=b.dataset.origLabel;}
+  function showError(msg){if(errBox){errBox.textContent=msg;errBox.classList.add('show');}}
+
+  if(emailForm){
+    emailForm.addEventListener('submit',function(e){
       e.preventDefault();
-      errBox.classList.remove('show');
-      errBox.textContent='';
-      var data=new FormData(form);
-      var email=(data.get('email')||'').trim();
-      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-        errBox.textContent='Please enter a valid email address.';
-        errBox.classList.add('show');
-        return;
-      }
-      btn.disabled=true;
-      var origLabel=btn.innerHTML;
-      btn.innerHTML='Reserving\u2026';
-      fetch(form.action,{method:'POST',headers:{'Accept':'application/json'},body:data})
-        .then(function(res){
-          if(res.ok){
-            form.style.display='none';
-            if(successEmail){successEmail.textContent=email;}
-            success.classList.add('show');
+      if(errBox){errBox.classList.remove('show');errBox.textContent='';}
+      var email=(emailInput.value||'').trim();
+      if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError('Please enter a valid email address.');return;}
+      currentEmail=email;
+      setBusy(emailBtn,'Sending code\u2026');
+      fetch('/api/verify/start',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})})
+        .then(function(res){return res.json().then(function(j){return {res:res,j:j};});})
+        .then(function(r){
+          clearBusy(emailBtn);
+          if(r.res.ok && r.j.ok){
+            if(codeEmailDisplay)codeEmailDisplay.textContent=email;
+            codeInput.value='';
+            showState(2);
+            setTimeout(function(){codeInput.focus();},120);
           }else{
-            return res.json().then(function(j){
-              var msg=(j && j.errors && j.errors[0] && j.errors[0].message) ? j.errors[0].message : 'Something went wrong. Please try again.';
-              errBox.textContent=msg;
-              errBox.classList.add('show');
-              btn.disabled=false;
-              btn.innerHTML=origLabel;
-            }).catch(function(){
-              errBox.textContent='Something went wrong. Please try again.';
-              errBox.classList.add('show');
-              btn.disabled=false;
-              btn.innerHTML=origLabel;
-            });
+            showError((r.j && r.j.error)==='invalid_email'?'Please enter a valid email address.':'We could not send a code. Please try again.');
           }
+        })
+        .catch(function(){clearBusy(emailBtn);showError('Network error. Please try again.');});
+    });
+  }
+
+  if(codeForm){
+    codeForm.addEventListener('submit',function(e){
+      e.preventDefault();
+      if(errBox){errBox.classList.remove('show');errBox.textContent='';}
+      var code=(codeInput.value||'').replace(/\D/g,'').trim();
+      if(!/^\d{4,8}$/.test(code)){showError('Enter the 6-digit code from your email.');return;}
+      setBusy(codeBtn,'Verifying\u2026');
+      fetch('/api/verify/check',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:currentEmail,code:code})})
+        .then(function(res){return res.json().then(function(j){return {res:res,j:j};});})
+        .then(function(r){
+          clearBusy(codeBtn);
+          if(r.res.ok && r.j.ok){
+            var fd=new FormData();
+            fd.append('email',currentEmail);
+            fd.append('source','webhosting197.com');
+            fd.append('_subject','webhosting197 launch list signup (verified)');
+            fd.append('verified','true');
+            fetch('https://formspree.io/f/xjgjwobq',{method:'POST',headers:{'Accept':'application/json'},body:fd}).catch(function(){});
+            if(successEmail)successEmail.textContent=currentEmail;
+            showState(3);
+          }else{
+            var err=r.j && r.j.error;
+            if(err==='invalid_code'){showError('That code is incorrect. Try again or resend.');}
+            else if(err==='expired'){showError('Code expired. Tap below to resend.');}
+            else if(err==='no_session'){showError('Session expired. Tap below to start over.');}
+            else if(err==='email_mismatch'){showError('Email mismatch. Tap below to start over.');}
+            else{showError('We could not verify the code. Please try again.');}
+          }
+        })
+        .catch(function(){clearBusy(codeBtn);showError('Network error. Please try again.');});
+    });
+  }
+
+  if(resendBack){resendBack.addEventListener('click',function(){showState(1);setTimeout(function(){emailInput.focus();},80);});}
+  if(codeInput){codeInput.addEventListener('input',function(e){var v=e.target.value.replace(/\D/g,'');if(v!==e.target.value)e.target.value=v;});}
         }).catch(function(){
           errBox.textContent='Network error. Please check your connection and try again.';
           errBox.classList.add('show');
