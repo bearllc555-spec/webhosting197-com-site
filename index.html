@@ -142,13 +142,34 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .detail-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6}
 @media(max-width:760px){.details-grid{grid-template-columns:1fr;gap:28px}}
 
-/* FAQ */
-.faq{padding:24px 32px 96px;max-width:760px;margin:0 auto;border-top:1px solid var(--rule)}
+/* App store badges + Designed-for-mobile callout */
+.apps-section{padding:24px 32px 24px;max-width:var(--max);margin:0 auto;text-align:center}
+.apps-inner{max-width:760px;margin:0 auto;padding:48px 0 32px;border-top:1px solid var(--rule)}
+.apps-tagline{font-size:clamp(22px,2.6vw,30px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin-bottom:8px;line-height:1.15}
+.apps-tagline em{font-style:italic;color:var(--blue);font-weight:700}
+.apps-sub{font-size:14.5px;color:var(--ink-soft);line-height:1.55;margin:0 auto 24px;max-width:46ch}
+.apps-eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:14px}
+.apps-badges{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.apps-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;background:#1C1B1F;color:#fff;border-radius:10px;text-decoration:none;transition:transform .15s,box-shadow .15s}
+.apps-badge:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(28,27,31,.18)}
+.apps-badge .badge-icon{width:24px;height:24px;flex-shrink:0}
+.apps-badge .badge-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;text-align:left}
+.apps-badge .badge-line1{font-size:10.5px;font-weight:400;opacity:.85}
+.apps-badge .badge-line2{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-top:2px}
+@media(max-width:520px){.apps-badges{gap:10px}.apps-badge{padding:9px 14px}}
+
+/* FAQ - Mercury-style collapsible accordion */
+.faq{padding:24px 32px 96px;max-width:760px;margin:0 auto}
 .faq h2{font-size:24px;font-weight:600;color:var(--ink);margin:48px 0 24px;letter-spacing:-.02em}
-.faq-item{padding:22px 0;border-bottom:1px solid var(--rule)}
-.faq-item:last-child{border-bottom:0}
-.faq-item h3{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px}
-.faq-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6}
+.faq-item{padding:0;border-bottom:1px solid var(--rule)}
+.faq-item:first-of-type{border-top:1px solid var(--rule)}
+.faq-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 0;font-size:16px;font-weight:600;color:var(--ink);transition:color .15s}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::marker{display:none;content:''}
+.faq-item summary:hover{color:var(--blue)}
+.faq-item summary .faq-caret{flex-shrink:0;width:18px;height:18px;color:var(--slate);transition:transform .25s cubic-bezier(.2,.7,.2,1),color .15s}
+.faq-item[open] summary .faq-caret{transform:rotate(180deg);color:var(--ink)}
+.faq-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin:0 0 22px;padding-right:34px}
 
 /* FOOTER */
 .foot{border-top:1px solid var(--rule);padding:32px;color:var(--slate);font-size:13px;text-align:center}
@@ -266,20 +287,49 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   </div>
 </section>
 
+
+<section class="apps-section">
+  <div class="apps-inner">
+    <h2 class="apps-tagline">Designed for mobile, <em>on mobile.</em></h2>
+    <p class="apps-sub">Manage your site, ship updates, and ask AI to refresh content from anywhere. Apps launch alongside the product in 2026.</p>
+    <div class="apps-eyebrow">Coming with launch &middot; 2026</div>
+    <div class="apps-badges">
+      <a href="#pricing" class="apps-badge" aria-label="Coming to the Apple App Store"><svg class="badge-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg><span class="badge-text"><span class="badge-line1">Coming soon to</span><span class="badge-line2">App Store</span></span></a>
+      <a href="#pricing" class="apps-badge" aria-label="Coming to Google Play"><svg class="badge-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="pgrad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00DCFF"/><stop offset="100%" stop-color="#00A0F4"/></linearGradient><linearGradient id="pgrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFCE00"/><stop offset="100%" stop-color="#FFB000"/></linearGradient><linearGradient id="pgrad3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF3A44"/><stop offset="100%" stop-color="#C31162"/></linearGradient><linearGradient id="pgrad4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00F076"/><stop offset="100%" stop-color="#00B373"/></linearGradient></defs><path d="M3.5 2.5v19l8-9.5z" fill="url(#pgrad4)"/><path d="M3.5 2.5l11.5 6L19 6.7c-.3-.3-.7-.4-1.2-.2L3.5 2.5z" fill="url(#pgrad1)"/><path d="M3.5 21.5l14.3-3.9c.5-.2.9-.3 1.2-.6L15 14.5z" fill="url(#pgrad3)"/><path d="M19 17c.5-.3.8-.7.8-1.2v-7.6c0-.5-.3-.9-.8-1.2L15 9.5l4 2.5z" fill="url(#pgrad2)"/></svg><span class="badge-text"><span class="badge-line1">Coming soon to</span><span class="badge-line2">Google Play</span></span></a>
+    </div>
+  </div>
+</section>
+
 <section class="faq">
   <h2>Common questions</h2>
-  <div class="faq-item">
-    <h3>What does $197 actually include?</h3>
-    <p>One website, hosted forever on edge infrastructure, with SSL, an AI-built initial site, and AI maintenance for content updates. Domain registration is separate (~$15/yr at any registrar). No upsells, no monthly fees.</p>
-  </div>
-  <div class="faq-item">
-    <h3>What happens if my business changes?</h3>
-    <p>Tell the AI. It rewrites the site for you — new services, new hours, new pricing, new photos. Your hosting plan doesn't change.</p>
-  </div>
-  <div class="faq-item">
-    <h3>When does it launch?</h3>
-    <p>2026. Reserve a spot at launch and we will email you the day it opens with first-50 founder pricing locked in.</p>
-  </div>
+  <details class="faq-item">
+    <summary><span>What does $147 include?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>One website, hosted forever on a globally distributed edge network, with SSL renewing automatically. AI builds the initial site to your spec and keeps the content fresh as your business evolves. Domain registration is separate (~$15/yr at any registrar). No upsells, no monthly fees.</p>
+  </details>
+  <details class="faq-item">
+    <summary><span>Why is the founder price $147 if you&rsquo;re called webhosting197?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>$197 is the standard lifetime price (right there in the name). Founders &mdash; the first 50 signups &mdash; lock in $147 instead, $50 off, for life. Once the 50 spots fill, the price reverts to $197.</p>
+  </details>
+  <details class="faq-item">
+    <summary><span>Can I use my own domain?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>Yes. Bring any domain you already own, or register a fresh one with any registrar. We&rsquo;ll point it at your hosted site at setup.</p>
+  </details>
+  <details class="faq-item">
+    <summary><span>Who owns the website?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>You do. Site, content, domain &mdash; all yours. If you ever want to leave, you take everything with you.</p>
+  </details>
+  <details class="faq-item">
+    <summary><span>What if I want to edit the site myself?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>You can. Most people just tell the AI what to change (&ldquo;add a winter menu,&rdquo; &ldquo;swap the photo of the storefront,&rdquo; &ldquo;raise prices to $X&rdquo;) and it ships the change. Manual editing is also available for anything you&rsquo;d rather hand-tune.</p>
+  </details>
+  <details class="faq-item">
+    <summary><span>What if my business changes?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>Same answer &mdash; tell the AI. New services, new hours, new pricing, new team photos, seasonal content. Your hosting plan doesn&rsquo;t change. Edits are unlimited.</p>
+  </details>
+  <details class="faq-item">
+    <summary><span>When does it launch?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>2026. Reserve a spot now and we&rsquo;ll email you the day it opens, with founder pricing already applied to your account if you&rsquo;re in the first 50.</p>
+  </details>
 </section>
 
 <footer class="foot">
