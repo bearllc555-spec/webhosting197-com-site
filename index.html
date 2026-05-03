@@ -71,8 +71,8 @@ img{max-width:100%;display:block}
 h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-height:1.02;color:var(--ink);max-width:18ch;margin:0 auto}
 .h1-reveal .word{display:inline-block;white-space:nowrap}
 .h1-reveal .space{display:inline-block}
-.h1-reveal .letter{display:inline-block;opacity:0;filter:blur(8px);transform:translateY(8px);animation:letterIn .55s cubic-bezier(.2,.7,.2,1) forwards;will-change:opacity,filter,transform}
-@keyframes letterIn{to{opacity:1;filter:blur(0);transform:translateY(0)}}
+.h1-reveal .letter{display:inline-block;opacity:0;transform:translateY(8px);animation:letterIn .55s cubic-bezier(.2,.7,.2,1) forwards;will-change:opacity,transform}
+@keyframes letterIn{to{opacity:1;transform:translateY(0)}}
 .price-amount.counting{font-variant-numeric:tabular-nums}
 @media(prefers-reduced-motion:reduce){.h1-reveal .letter{opacity:1;filter:none;transform:none;animation:none}}
 .lead{font-size:clamp(16px,1.4vw,19px);color:var(--ink-soft);max-width:54ch;line-height:1.55;margin:24px auto 0}
@@ -121,15 +121,16 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .feature-list .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:8px}
 .feature{display:flex;align-items:flex-start;gap:.75rem;font-size:14.5px;color:var(--ink-soft);line-height:1.5}
 .feature svg{width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px}
-/* Animated reveal: text fades up first, then check stroke draws itself */
-.feature-list.animate-armed .feature span{opacity:0;transform:translateY(6px);will-change:opacity,transform}
+/* Reveal: letter-by-letter typewriter (matches H1 style), then check stroke draws */
+.feature-list .feature .word{display:inline-block;white-space:nowrap}
+.feature-list .feature .space{display:inline-block}
+.feature-list.animate-armed .feature .letter{display:inline-block;opacity:0;transform:translateY(6px);will-change:opacity,transform}
 .feature-list.animate-armed .feature svg polyline{stroke-dasharray:30;stroke-dashoffset:30;stroke-linecap:round;stroke-linejoin:round}
-.feature-list.animate-go .feature span{animation:featureTextIn .28s cubic-bezier(.2,.7,.2,1) forwards}
+.feature-list.animate-go .feature .letter{animation:letterIn .42s cubic-bezier(.2,.7,.2,1) forwards}
 .feature-list.animate-go .feature svg polyline{animation:featureCheckDraw .32s cubic-bezier(.5,0,.5,1) forwards}
-@keyframes featureTextIn{to{opacity:1;transform:translateY(0)}}
 @keyframes featureCheckDraw{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){
-  .feature-list.animate-armed .feature span,.feature-list.animate-armed .feature svg polyline{opacity:1;transform:none;stroke-dashoffset:0}
+  .feature-list.animate-armed .feature .letter,.feature-list.animate-armed .feature svg polyline{opacity:1;transform:none;stroke-dashoffset:0}
 }
 
 /* DETAILS */
@@ -454,20 +455,46 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     }).catch(function(){});
   })();
 
-  // What's-included feature list animation: text fades up, then check draws, staggered per row
+  // What's-included feature list: letter-by-letter typewriter (matches H1 style), then check draws
   (function(){
     var list=document.querySelector('.feature-list');
     if(!list)return;
     var features=list.querySelectorAll('.feature');
     if(!features.length)return;
     list.classList.add('animate-armed');
-    var stagger=350;       // ms between rows
-    var checkOffset=180;   // ms - check starts after text
+    var letterStagger=12;     // ms per letter within a line
+    var lineStartGap=350;     // ms between line starts (overlap allowed)
+    var checkOffset=80;       // ms after a line's last letter, check draws
     features.forEach(function(f,i){
-      var textDelay=(i*stagger)+'ms';
-      var checkDelay=(i*stagger+checkOffset)+'ms';
       var span=f.querySelector('span');
-      if(span)span.style.animationDelay=textDelay;
+      if(!span)return;
+      var text=span.textContent;
+      span.textContent='';
+      var lineStart=i*lineStartGap;
+      var letterIdx=0;
+      var tokens=text.split(/(\s+)/);
+      tokens.forEach(function(tok){
+        if(!tok)return;
+        if(/^\s+$/.test(tok)){
+          var sp=document.createElement('span');
+          sp.className='space';
+          sp.innerHTML='&nbsp;';
+          span.appendChild(sp);
+          return;
+        }
+        var word=document.createElement('span');
+        word.className='word';
+        for(var k=0;k<tok.length;k++){
+          var letter=document.createElement('span');
+          letter.className='letter';
+          letter.textContent=tok.charAt(k);
+          letter.style.animationDelay=(lineStart+letterIdx*letterStagger)+'ms';
+          word.appendChild(letter);
+          letterIdx++;
+        }
+        span.appendChild(word);
+      });
+      var checkDelay=(lineStart+letterIdx*letterStagger+checkOffset)+'ms';
       var poly=f.querySelector('svg polyline');
       if(poly)poly.style.animationDelay=checkDelay;
     });
