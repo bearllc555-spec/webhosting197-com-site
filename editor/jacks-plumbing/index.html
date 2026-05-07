@@ -44,7 +44,8 @@
   .topbar-site { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--ink-soft); }
   .topbar-site .domain { color: var(--slate); font-weight: 500; }
   .save-status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8125rem; color: var(--slate); margin-left: auto; margin-right: 0.5rem; }
-  .save-status .dot { width: 7px; height: 7px; background: var(--green); border-radius: 999px; box-shadow: 0 0 0 3px var(--green-soft); }
+  .save-status .dot { width: 7px; height: 7px; background: var(--green); border-radius: 999px; box-shadow: 0 0 0 3px var(--green-soft); transition: background-color 0.2s ease, box-shadow 0.2s ease; }
+  .save-status.local .dot { background: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.18); }
   .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; font-size: 0.875rem; font-weight: 600; border-radius: 8px; border: 1px solid transparent; text-decoration: none; cursor: pointer; font-family: inherit; transition: transform 0.12s, box-shadow 0.12s, background 0.15s; }
   .btn-ghost { background: white; color: var(--ink); border-color: var(--rule-strong); }
   .btn-ghost:hover { border-color: var(--slate); }
@@ -361,18 +362,17 @@ async function sendRequest() {
       payload.subTargetIndex = subTargetForSend.subIndex;
       payload.subTargetLabel = subTargetForSend.label;
     }
-    const r = await fetch("/api/edit", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const j = await r.json();
+    const result = await postEditWithRetry(payload);
     thinking.remove();
-    if (!r.ok) {
-      appendErrorMessage(j.error || `request failed (${r.status})`);
-      return;
+    if (result.kind === "ok") {
+      appendAssistantMessage(result.payload);
+    } else if (result.kind === "rate_limited") {
+      appendErrorMessage("Hmm — Press is taking a breather. Wait a few seconds and try again.");
+    } else if (result.kind === "api_error") {
+      appendErrorMessage(result.message || `request failed (${result.status})`);
+    } else {
+      appendErrorMessage(result.message || "Network error. Try again.");
     }
-    appendAssistantMessage(j);
   } catch (err) {
     thinking.remove();
     appendErrorMessage(err.message || "Network error. Try again.");
@@ -380,6 +380,47 @@ async function sendRequest() {
     $send.disabled = false;
     $input.focus();
   }
+}
+
+// POST /api/edit with one auto-retry on transient 5xx. Distinguishes between:
+//   - ok           : real JSON returned by our Function
+//   - rate_limited : HTML body (CF/upstream blocked us); show friendly toast
+//   - api_error    : JSON error from our Function (4xx with structured body)
+//   - network_error: fetch threw or response wasn't parseable as expected
+async function postEditWithRetry(payload) {
+  const tryOnce = async () => {
+    let r;
+    try {
+      r = await fetch("/api/edit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      return { kind: "network_error", message: e && e.message ? e.message : "Network error" };
+    }
+    const text = await r.text();
+    // Detect HTML-error-page responses (Cloudflare 502/rate-limit/firewall)
+    const looksLikeHtml = text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<");
+    if (looksLikeHtml) {
+      return { kind: "rate_limited", status: r.status };
+    }
+    let j;
+    try { j = JSON.parse(text); }
+    catch { return { kind: "network_error", message: "Bad response from server" }; }
+    if (!r.ok) {
+      return { kind: "api_error", status: r.status, message: j.error || j.message || `request failed (${r.status})` };
+    }
+    return { kind: "ok", payload: j };
+  };
+  let result = await tryOnce();
+  // Single backoff retry on rate-limit only — don't retry api_error or network_error
+  // because those shouldn't change on retry and we don't want to amplify load.
+  if (result.kind === "rate_limited") {
+    await new Promise((res) => setTimeout(res, 1200));
+    result = await tryOnce();
+  }
+  return result;
 }
 
 function appendUserMessage(text, target) {
@@ -459,7 +500,7 @@ function appendAssistantMessage(payload) {
 
   const applyBtn = el.querySelector(".apply-btn");
   if (applyBtn) {
-    applyBtn.addEventListener("click", () => applyDiff(narration, proposedSite, applyBtn));
+    applyBtn.addEventListener("click", () => applyDiff(narration, proposedSite, applyBtn, diff));
   }
   const discardBtn = el.querySelector(".discard-btn");
   if (discardBtn) {
@@ -521,7 +562,7 @@ function formatValue(value, path) {
 
 /* ---------- apply diff ---------- */
 
-function applyDiff(narration, proposedSite, btn) {
+function applyDiff(narration, proposedSite, btn, diffOps) {
   // Replace the message's action buttons with a "applied" indicator
   const actions = btn.parentElement;
   actions.innerHTML = `<span style="font-size:0.8rem; color:var(--green)">✓ Applied</span>`;
@@ -536,6 +577,11 @@ function applyDiff(narration, proposedSite, btn) {
 
   // Apply visual changes to iframe in-place where possible
   patchIframePreview(currentSite);
+
+  // Persist the diff ops to localStorage so refresh-replay can restore them
+  if (Array.isArray(diffOps) && diffOps.length > 0) {
+    pushDiffOps(diffOps);
+  }
 
   // Refresh history pane
   renderHistory();
@@ -645,7 +691,7 @@ function previewVersion(idx) {
   // Restore current state after 5 seconds so they don't lose the live view
   setTimeout(() => {
     patchIframePreview(currentSite);
-    flashSaveStatus("All changes saved");
+    updateSaveStatus(); // re-derive honest topbar state from localStorage
   }, 5000);
 }
 
@@ -671,15 +717,10 @@ document.querySelectorAll(".device-toggle button").forEach(btn => {
 /* ---------- top-bar actions ---------- */
 
 $publishBtn.addEventListener("click", () => {
-  // V1: just visual feedback. In production this triggers /api/apply →
-  // commit + deploy + custom-domain check.
-  $publishBtn.disabled = true;
-  $publishBtn.textContent = "Publishing...";
-  setTimeout(() => {
-    $publishBtn.disabled = false;
-    $publishBtn.innerHTML = "Publish · live in 30s";
-    flashSaveStatus("✓ Published — live now");
-  }, 1500);
+  // Step 1: Publish wiring is deferred to Step 5 (KV-backed /api/apply +
+  // server-side render of preview from site.json). For now, be honest with
+  // the customer rather than pretending to publish.
+  flashSaveStatus("Publish coming soon — your local changes are still here");
 });
 
 $downloadBtn.addEventListener("click", () => {
@@ -722,13 +763,190 @@ function relativeTime(ts) {
   return `${day} day${day > 1 ? "s" : ""} ago`;
 }
 
+/* ---------- save-status truth state ----------
+ *
+ * Three states map to two visual representations:
+ *   - "saved" (no local diffs):           green dot + "Saved"
+ *   - "local" (localStorage has diffs):   amber dot + "Local changes — not yet published"
+ *   - "transient" (just-applied toast):   amber dot + "<short toast>" for 3.5s, then re-derive
+ *
+ * Step 5 will add a real "published" state once KV-backed /api/apply is wired.
+ */
+const $saveStatus = document.getElementById("saveStatus");
 let saveStatusTimeout = null;
+
+function updateSaveStatus() {
+  const stack = loadDiffStack();
+  if (stack.length > 0) {
+    $saveStatus.classList.add("local");
+    $saveStatusText.textContent = "Local changes — not yet published";
+  } else {
+    $saveStatus.classList.remove("local");
+    $saveStatusText.textContent = "Saved";
+  }
+}
+
 function flashSaveStatus(msg) {
+  // Show a short toast, keep amber dot if we have local changes,
+  // then re-derive the steady-state text after 3.5s.
   $saveStatusText.textContent = msg;
+  if (loadDiffStack().length > 0) {
+    $saveStatus.classList.add("local");
+  }
   clearTimeout(saveStatusTimeout);
-  saveStatusTimeout = setTimeout(() => {
-    $saveStatusText.textContent = "All changes saved";
-  }, 3500);
+  saveStatusTimeout = setTimeout(updateSaveStatus, 3500);
+}
+
+/* ---------- diff persistence + iframe replay (Step 1, B03 phase A) ----------
+ *
+ * Apply mutates the iframe DOM in-memory (patchIframePreview). That mutation
+ * dies on iframe reload because the preview is a static file. To make
+ * Apply persist across refresh, we also push every applied diff op onto a
+ * localStorage stack scoped to this customer. On every iframe load we replay
+ * the stack against the freshly-rendered DOM, restoring all prior changes.
+ *
+ * Step 5 will replace this with a KV-backed /api/apply Function that re-renders
+ * the preview server-side. Until then, the localStorage layer is the source
+ * of truth for "what's locally changed" — it powers the topbar truth-state and
+ * survives refresh.
+ *
+ * Storage key: "press:<customer-slug>:diffs"  (scoped per customer)
+ * Storage shape: JSON array of diff ops, in order applied
+ */
+
+const DIFF_STORAGE_KEY = "press:" + (currentSite?.meta?.customer_slug || "default") + ":diffs";
+
+function loadDiffStack() {
+  try {
+    const raw = localStorage.getItem(DIFF_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function pushDiffOps(ops) {
+  if (!Array.isArray(ops) || ops.length === 0) return;
+  const stack = loadDiffStack();
+  ops.forEach((op) => stack.push(op));
+  try { localStorage.setItem(DIFF_STORAGE_KEY, JSON.stringify(stack)); } catch (e) { console.warn("localStorage push failed:", e); }
+}
+
+function clearDiffStack() {
+  try { localStorage.removeItem(DIFF_STORAGE_KEY); } catch {}
+}
+
+// Replay every stored diff op against the iframe DOM. Called after iframe load.
+// Skips ops we don't know how to render (logged to console, not a hard error).
+function replayDiffsInIframe() {
+  const stack = loadDiffStack();
+  if (stack.length === 0) return;
+  const doc = $iframe.contentDocument;
+  if (!doc || !doc.body) return;
+  stack.forEach((op) => {
+    try { applyOpToIframe(doc, op); }
+    catch (e) { console.warn("Replay skipped op:", op, e); }
+  });
+}
+
+function applyOpToIframe(doc, op) {
+  if (op.op !== "set") return; // V1: only set is supported for replay; insert/remove/move are deferred
+  const path = op.path;
+  const value = op.value;
+
+  // Brand colors → CSS variables on iframe :root
+  if (path === "brand.colors.primary")     { doc.documentElement.style.setProperty("--primary", value); return; }
+  if (path === "brand.colors.accent")      { doc.documentElement.style.setProperty("--accent", value); return; }
+  if (path === "brand.colors.neutral_dark"){ doc.documentElement.style.setProperty("--neutral-dark", value); return; }
+  if (path === "brand.colors.neutral_light"){doc.documentElement.style.setProperty("--neutral-light", value); return;}
+
+  // Business name → header logo + footer brand
+  if (path === "business.name") {
+    doc.querySelectorAll(".brand-logo").forEach((el) => { el.textContent = value; });
+    doc.querySelectorAll(".footer-brand").forEach((el) => { el.textContent = value; });
+    return;
+  }
+
+  // Phone number → all phone buttons + footer tel: link
+  if (path === "business.contact.phone") {
+    const telHref = "tel:" + String(value).replace(/[^\d+]/g, "");
+    // Buttons that show "Call (NNN) NNN-NNNN" — replace the phone fragment in textContent
+    doc.querySelectorAll(".nav-cta, .hero-cta, .cta-btn").forEach((el) => {
+      const phoneRegex = /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
+      // Walk text nodes so we don't blow away child SVG arrows
+      el.childNodes.forEach((n) => {
+        if (n.nodeType === 3 && phoneRegex.test(n.nodeValue)) {
+          n.nodeValue = n.nodeValue.replace(phoneRegex, value);
+        }
+      });
+      if (el.tagName === "A") el.setAttribute("href", telHref);
+    });
+    doc.querySelectorAll(".footer-link[href^='tel:']").forEach((el) => {
+      el.textContent = value;
+      el.setAttribute("href", telHref);
+    });
+    return;
+  }
+
+  // sections[N].props.<field> → tagged-section descendants
+  const sectionMatch = path.match(/^sections\[(\d+)\]\.props\.([\w_]+)$/);
+  if (sectionMatch) {
+    const idx = parseInt(sectionMatch[1], 10);
+    const prop = sectionMatch[2];
+    const section = doc.querySelector('[data-press-section="' + idx + '"]');
+    if (!section) return;
+    if (prop === "headline")    { const el = section.querySelector("h1"); if (el) el.textContent = value; return; }
+    if (prop === "subheadline") { const el = section.querySelector(".lead.hero-sub, .hero-sub, .lead"); if (el) el.textContent = value; return; }
+    if (prop === "heading")     { const el = section.querySelector("h2"); if (el) el.textContent = value; return; }
+    if (prop === "subheading")  { const el = section.querySelector(".cta-sub, .lead.cta-sub"); if (el) el.textContent = value; return; }
+    if (prop === "cta_label")   {
+      const btn = section.querySelector(".btn, .hero-cta, .cta-btn, .nav-cta");
+      if (btn) {
+        // Preserve any SVG icon inside the button
+        const svg = btn.querySelector("svg");
+        const txt = btn.firstChild;
+        if (txt && txt.nodeType === 3) txt.nodeValue = value + " ";
+        else { btn.insertBefore(doc.createTextNode(value + " "), btn.firstChild); }
+        if (svg && !btn.contains(svg)) btn.appendChild(svg);
+      }
+      return;
+    }
+    if (prop === "cta_href") {
+      const btn = section.querySelector("a.btn, a.hero-cta, a.cta-btn, a.nav-cta");
+      if (btn) btn.setAttribute("href", value);
+      return;
+    }
+  }
+
+  // Testimonials nested inside a section → sections[N].props.testimonials[M].<field>
+  const testMatch = path.match(/^sections\[(\d+)\]\.props\.testimonials\[(\d+)\]\.([\w_]+)$/);
+  if (testMatch) {
+    const sidx = parseInt(testMatch[1], 10);
+    const tidx = parseInt(testMatch[2], 10);
+    const prop = testMatch[3];
+    const section = doc.querySelector('[data-press-section="' + sidx + '"]');
+    if (!section) return;
+    const cards = section.querySelectorAll(".testimonial-card");
+    const card = cards[tidx];
+    if (!card) return;
+    if (prop === "quote")  { const el = card.querySelector(".quote, blockquote, p:not(.author):not(.role)"); if (el) el.textContent = value; return; }
+    if (prop === "author") { const el = card.querySelector(".author"); if (el) el.textContent = value; return; }
+    if (prop === "role")   { const el = card.querySelector(".role"); if (el) el.textContent = value; return; }
+  }
+
+  // Top-level services[N].<field> → service-card descendants
+  const serviceMatch = path.match(/^services\[(\d+)\]\.([\w_]+)$/);
+  if (serviceMatch) {
+    const idx = parseInt(serviceMatch[1], 10);
+    const prop = serviceMatch[2];
+    const cards = doc.querySelectorAll(".service-card");
+    const card = cards[idx];
+    if (!card) return;
+    if (prop === "name")        { const el = card.querySelector("h3, h4, .service-title"); if (el) el.textContent = value; return; }
+    if (prop === "description") { const el = card.querySelector("p, .service-desc"); if (el) el.textContent = value; return; }
+  }
 }
 
 /* ---------- preview chrome navigation (back/forward/reload) ---------- */
@@ -959,17 +1177,37 @@ function clearSelection() {
   $targetPill.classList.remove("show");
 }
 
-// Re-setup on every iframe load (initial + after navigations / reloads)
-$iframe.addEventListener("load", setupSectionTargeting);
+// Re-setup on every iframe load (initial + after navigations / reloads).
+// Also replays any locally-applied diffs so refresh doesn't erase changes.
+function onIframeLoad() {
+  setupSectionTargeting();
+  replayDiffsInIframe();
+}
+$iframe.addEventListener("load", onIframeLoad);
 // In case the iframe is already loaded by the time this runs
 if ($iframe.contentDocument && $iframe.contentDocument.readyState === "complete") {
-  setupSectionTargeting();
+  onIframeLoad();
 }
 $targetPillClose.addEventListener("click", clearSelection);
+
+/* ---------- mouse-wheel forwarding into iframe (B01) ----------
+ *
+ * Cross-context wheel events don't reliably scroll an iframe's inner document
+ * when the iframe is inside a flex/grid layout with multiple overflow contexts.
+ * Forward the parent-page wheel events directly to the iframe's contentWindow
+ * so the customer can scroll the preview naturally with their mouse.
+ */
+const $iframeWrap = document.getElementById("previewTab");
+$iframeWrap.addEventListener("wheel", (e) => {
+  if (!$iframe.contentWindow) return;
+  e.preventDefault();
+  $iframe.contentWindow.scrollBy({ top: e.deltaY, left: e.deltaX, behavior: "instant" });
+}, { passive: false });
 
 /* ---------- bootstrap ---------- */
 
 renderHistory();
+updateSaveStatus();   // derive topbar truth-state from localStorage on load
 $input.focus();
 </script>
 </body>
