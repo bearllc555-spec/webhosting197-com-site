@@ -1042,6 +1042,24 @@ $input.addEventListener("keydown", (e) => {
   }
 });
 
+// Bulletproof placeholder hide on focus — clear the placeholder attribute
+// outright on focus, restore it on blur. The CSS-only approach
+// (.composer-input:focus::placeholder { color: white }) doesn't render
+// reliably in some browsers; this guarantees the gray hint vanishes the
+// instant the customer clicks into the textarea.
+$input.addEventListener("focus", () => {
+  if (!$input.dataset.savedPlaceholder) {
+    $input.dataset.savedPlaceholder = $input.placeholder || "";
+    $input.placeholder = "";
+  }
+});
+$input.addEventListener("blur", () => {
+  if ($input.dataset.savedPlaceholder !== undefined) {
+    $input.placeholder = $input.dataset.savedPlaceholder;
+    delete $input.dataset.savedPlaceholder;
+  }
+});
+
 /* ---------- helpers ---------- */
 
 function escapeHtml(s) {
