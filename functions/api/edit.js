@@ -62,8 +62,9 @@ async function handle({ request, env }) {
     return jsonResp(500, { error: "GEMINI_API_KEY not configured" });
   }
 
-  // If the customer pointed at a specific section in the preview, surface
-  // that targeting hint to the model so it scopes the diff narrowly.
+  // If the customer pointed at a specific section (and optionally a
+  // sub-element within it), surface that targeting hint to the model so it
+  // scopes the diff narrowly.
   let targetingHint = "";
   if (
     typeof body.targetType === "string" &&
@@ -71,19 +72,63 @@ async function handle({ request, env }) {
     body.targetType.length > 0
   ) {
     const safeLabel =
-      typeof body.targetLabel === "string" && body.targetLabel.length < 100
+      typeof body.targetLabel === "string" && body.targetLabel.length < 120
         ? body.targetLabel
         : body.targetType;
-    targetingHint =
+
+    // Build the parent-section hint
+    let hint =
       "\n\nIMPORTANT TARGETING HINT: The customer clicked on a specific section " +
       "in the preview before sending this request. They are pointing at: " +
       JSON.stringify(safeLabel) +
-      " which corresponds to sections[" + body.targetIndex + "] of type " +
-      JSON.stringify(body.targetType) +
-      ". Scope your diff to that section only — do not change unrelated sections, " +
-      "global brand colors, or the whole site, unless the customer explicitly says so. " +
-      "If their request makes more sense applied site-wide (e.g., changing brand color), " +
-      "still acknowledge the targeted section in your narration.";
+      " — corresponds to sections[" + body.targetIndex + "] of type " +
+      JSON.stringify(body.targetType) + ".";
+
+    // If they ALSO clicked a sub-element within that section, add that detail
+    if (
+      typeof body.subTargetKind === "string" &&
+      typeof body.subTargetIndex === "number" &&
+      body.subTargetKind.length > 0
+    ) {
+      const safeSubLabel =
+        typeof body.subTargetLabel === "string" && body.subTargetLabel.length < 200
+          ? body.subTargetLabel
+          : body.subTargetKind;
+      hint +=
+        " WITHIN that section, they pointed at a specific sub-element: " +
+        JSON.stringify(safeSubLabel) +
+        " — sub-element kind " + JSON.stringify(body.subTargetKind) +
+        ", sub-index " + body.subTargetIndex + ".";
+
+      // Path hints per sub-kind so the model knows where to write
+      if (body.subTargetKind === "service_card") {
+        hint += " The path for this sub-element is services[" + body.subTargetIndex + "].";
+      } else if (body.subTargetKind === "testimonial_card") {
+        hint += " The path for this sub-element is sections[" + body.targetIndex +
+          "].props.testimonials[" + body.subTargetIndex + "].";
+      } else if (body.subTargetKind === "headline") {
+        hint += " The path for this sub-element is sections[" + body.targetIndex + "].props.headline.";
+      } else if (body.subTargetKind === "subheadline") {
+        hint += " The path for this sub-element is sections[" + body.targetIndex + "].props.subheadline.";
+      } else if (body.subTargetKind === "heading") {
+        hint += " The path for this sub-element is sections[" + body.targetIndex + "].props.heading.";
+      } else if (body.subTargetKind === "cta_button") {
+        hint += " The button text is at sections[" + body.targetIndex +
+          "].props.cta_label and the link target is at sections[" + body.targetIndex + "].props.cta_href.";
+      }
+
+      hint +=
+        " Scope your diff to ONLY this sub-element unless the customer explicitly asks for a broader change. " +
+        "Do not modify other parts of the section, other sections, or global brand colors.";
+    } else {
+      hint +=
+        " Scope your diff to that section only — do not change unrelated sections, " +
+        "global brand colors, or the whole site, unless the customer explicitly says so. " +
+        "If their request makes more sense applied site-wide (e.g., changing brand color), " +
+        "still acknowledge the targeted section in your narration.";
+    }
+
+    targetingHint = hint;
   }
 
   const userPrompt =

@@ -132,7 +132,12 @@
   .preview-overlay { flex-shrink: 0; height: 38px; background: white; border-bottom: 1px solid var(--rule); display: flex; align-items: center; padding: 0 0.85rem; gap: 0.4rem; }
   .preview-dot { width: 11px; height: 11px; border-radius: 999px; }
   .preview-dot.r { background: #FF5F57; } .preview-dot.y { background: #FEBC2E; } .preview-dot.g { background: #28C840; }
-  .preview-overlay-url { margin-left: 0.85rem; font-size: 0.75rem; color: var(--slate); font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+  .preview-nav { display: inline-flex; gap: 0.2rem; margin-left: 0.6rem; }
+  .preview-nav button { width: 24px; height: 24px; padding: 0; background: white; border: 1px solid var(--rule); border-radius: 6px; color: var(--ink-soft); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; line-height: 1; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+  .preview-nav button:hover { background: var(--bg); color: var(--ink); border-color: var(--rule-strong); }
+  .preview-nav button:active { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+  .preview-nav button svg { width: 13px; height: 13px; display: block; }
+  .preview-overlay-url { margin-left: 0.6rem; font-size: 0.75rem; color: var(--slate); font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
 
   /* ---- history side panel ---- */
   .history-tab { display: none; }
@@ -221,6 +226,17 @@
             <span class="preview-dot r"></span>
             <span class="preview-dot y"></span>
             <span class="preview-dot g"></span>
+            <span class="preview-nav">
+              <button type="button" id="navBack" title="Back" aria-label="Back">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <button type="button" id="navForward" title="Forward" aria-label="Forward">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+              <button type="button" id="navReload" title="Reload" aria-label="Reload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              </button>
+            </span>
             <span class="preview-overlay-url">jacksplumbing.com</span>
           </div>
           <iframe id="previewIframe" src="../../preview/jacks-plumbing/index.html" title="Live preview"></iframe>
@@ -321,12 +337,17 @@ async function sendRequest() {
   if (!request) return;
   $input.value = "";
   $send.disabled = true;
-  appendUserMessage(request, selectedTarget);
+  // The sub-target label takes precedence in display if both are set
+  const tagForChat = selectedSubTarget
+    ? { label: selectedSubTarget.label }
+    : selectedTarget;
+  appendUserMessage(request, tagForChat);
   const thinking = appendThinkingMessage();
 
-  // Capture target at send-time so the user can clear/change it without
+  // Capture targets at send-time so the user can clear/change them without
   // affecting the in-flight request.
   const targetForSend = selectedTarget ? { ...selectedTarget } : null;
+  const subTargetForSend = selectedSubTarget ? { ...selectedSubTarget } : null;
 
   try {
     const payload = { siteJson: currentSite, request };
@@ -334,6 +355,11 @@ async function sendRequest() {
       payload.targetType = targetForSend.type;
       payload.targetIndex = targetForSend.index;
       payload.targetLabel = targetForSend.label;
+    }
+    if (subTargetForSend) {
+      payload.subTargetKind = subTargetForSend.kind;
+      payload.subTargetIndex = subTargetForSend.subIndex;
+      payload.subTargetLabel = subTargetForSend.label;
     }
     const r = await fetch("/api/edit", {
       method: "POST",
@@ -705,13 +731,39 @@ function flashSaveStatus(msg) {
   }, 3500);
 }
 
-/* ---------- section targeting (hover-highlight + click-to-select) ----------
+/* ---------- preview chrome navigation (back/forward/reload) ---------- */
+
+const $navBack = document.getElementById("navBack");
+const $navForward = document.getElementById("navForward");
+const $navReload = document.getElementById("navReload");
+const INITIAL_IFRAME_SRC = $iframe.getAttribute("src");
+
+$navBack.addEventListener("click", () => {
+  try { $iframe.contentWindow.history.back(); } catch (e) { $iframe.src = INITIAL_IFRAME_SRC; }
+});
+$navForward.addEventListener("click", () => {
+  try { $iframe.contentWindow.history.forward(); } catch (e) { /* noop */ }
+});
+$navReload.addEventListener("click", () => {
+  // Always go back to the original Jack's Plumbing preview — protects the
+  // user when a stray click navigated the iframe away.
+  $iframe.src = INITIAL_IFRAME_SRC;
+});
+
+/* ---------- section + sub-section targeting (hover, click, drill-down) ----------
  *
- * Customer hovers the preview iframe; sections get a faint pale-green tint
- * and outline. Click locks selection; the chat composer's target pill
- * displays "Editing: <label>". The selected target is sent to /api/edit so
- * the AI scopes its diff to that section. Same-origin → direct DOM access
- * to the iframe is allowed.
+ * Two levels of targeting:
+ *   - Level 1 (parent section): green hover + selected. Click any section in
+ *     the iframe — pill says "Editing: <label>". Sets selectedTarget.
+ *   - Level 2 (sub-element inside a selected parent): amber hover + selected.
+ *     Click sub-element AFTER parent is selected — pill says "Editing:
+ *     <child label>". Parent stays in faded green. Sets selectedSubTarget.
+ *
+ * Click outside any section clears both.
+ *
+ * Same-origin iframe → direct DOM access. Link clicks inside the iframe are
+ * intercepted (preventDefault) so accidental link presses don't navigate
+ * away from the customer's site mid-edit.
  */
 
 const SECTION_SELECTORS = [
@@ -723,7 +775,30 @@ const SECTION_SELECTORS = [
   { selector: ".form",         type: "form",          label: "the contact form" },
 ];
 
-let selectedTarget = null;
+// Per-parent-type sub-element selectors, in priority order. The first match
+// wins — so put more specific selectors before broader ones.
+const SUB_SELECTORS_BY_PARENT = {
+  hero: [
+    { selector: "h1",            kind: "headline",     label: () => "the main headline" },
+    { selector: ".lead",         kind: "subheadline",  label: () => "the subheadline" },
+    { selector: ".btn",          kind: "cta_button",   label: (el) => 'the "' + (el.textContent || "").trim().slice(0, 40) + '" button' },
+  ],
+  services_grid: [
+    { selector: ".service-card", kind: "service_card", label: (el) => 'the "' + (el.querySelector("h3")?.textContent || "service").trim().slice(0, 40) + '" service card' },
+  ],
+  testimonials: [
+    { selector: ".testimonial-card", kind: "testimonial_card", label: (el) => 'the testimonial from ' + (el.querySelector(".author")?.textContent || "this person").trim().slice(0, 40) },
+  ],
+  cta: [
+    { selector: "h2",            kind: "heading",      label: () => "the call-out heading" },
+    { selector: ".btn",          kind: "cta_button",   label: (el) => 'the "' + (el.textContent || "").trim().slice(0, 40) + '" button' },
+  ],
+  gallery: [],
+  form: [],
+};
+
+let selectedTarget = null;     // { type, index, label }
+let selectedSubTarget = null;  // { kind, parentIndex, parentType, subIndex, label }
 const $targetPill = document.getElementById("targetPill");
 const $targetLabel = document.getElementById("targetLabel");
 const $targetPillClose = document.getElementById("targetPillClose");
@@ -748,31 +823,85 @@ function setupSectionTargeting() {
     "  outline-color: rgba(16, 185, 129, 0.55);",
     "}",
     "[data-press-section].press-selected {",
-    "  background-color: rgba(16, 185, 129, 0.12) !important;",
+    "  background-color: rgba(16, 185, 129, 0.10) !important;",
     "  outline-color: rgba(16, 185, 129, 0.85);",
     "  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.15);",
+    "}",
+    "[data-press-section].press-parent-faded {",
+    "  background-color: rgba(16, 185, 129, 0.04) !important;",
+    "  outline-color: rgba(16, 185, 129, 0.45);",
+    "}",
+    "[data-press-section].press-selected [data-press-subsection],",
+    "[data-press-section].press-parent-faded [data-press-subsection] {",
+    "  cursor: pointer;",
+    "  transition: background-color 0.12s ease, outline-color 0.12s ease;",
+    "  outline: 2px solid transparent;",
+    "  outline-offset: -2px;",
+    "}",
+    "[data-press-section].press-selected [data-press-subsection]:hover,",
+    "[data-press-section].press-parent-faded [data-press-subsection]:hover {",
+    "  background-color: rgba(245, 158, 11, 0.10) !important;",
+    "  outline-color: rgba(245, 158, 11, 0.7);",
+    "}",
+    "[data-press-subsection].press-sub-selected {",
+    "  background-color: rgba(245, 158, 11, 0.18) !important;",
+    "  outline-color: rgba(245, 158, 11, 0.95);",
+    "  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.18);",
     "}",
   ].join("\n");
   doc.head.appendChild(style);
 
-  // Tag each known section with a press-section index, type, and label
-  let i = 0;
+  // Tag each known section
+  let parentIdx = 0;
   SECTION_SELECTORS.forEach((spec) => {
     const els = Array.from(doc.querySelectorAll(spec.selector));
     els.forEach((el) => {
-      el.setAttribute("data-press-section", String(i));
+      el.setAttribute("data-press-section", String(parentIdx));
       el.setAttribute("data-press-type", spec.type);
       el.setAttribute("data-press-label", spec.label);
+
+      // Tag sub-elements within this parent
+      const subs = SUB_SELECTORS_BY_PARENT[spec.type] || [];
+      subs.forEach((subSpec) => {
+        const subEls = Array.from(el.querySelectorAll(subSpec.selector));
+        subEls.forEach((subEl, subIdx) => {
+          if (subEl.hasAttribute("data-press-subsection")) return;
+          subEl.setAttribute("data-press-subsection", subSpec.kind);
+          subEl.setAttribute("data-press-sub-index", String(subIdx));
+          subEl.setAttribute("data-press-sub-label", subSpec.label(subEl, subIdx));
+          subEl.addEventListener("click", (e) => {
+            // Only act on sub-element clicks if its parent is currently selected
+            const parent = subEl.closest("[data-press-section]");
+            if (!parent) return;
+            if (selectedTarget && selectedTarget.index === parseInt(parent.getAttribute("data-press-section"), 10)) {
+              e.preventDefault();
+              e.stopPropagation();
+              selectSubElement(subEl, parent);
+            }
+          });
+        });
+      });
+
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
         selectSection(el);
       });
-      i++;
+      parentIdx++;
     });
   });
 
-  // Click anywhere outside a tagged section clears the selection
+  // Intercept ALL link clicks inside the iframe so customers don't accidentally
+  // navigate away from their own site while editing. Their click still selects
+  // the parent section it sits in (if any), preserving the targeting flow.
+  doc.querySelectorAll("a[href]").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Don't stop propagation — let the parent-section click handler still fire
+    }, true /* useCapture */);
+  });
+
+  // Click anywhere outside any tagged section clears all selection
   doc.body.addEventListener("click", (e) => {
     if (!e.target.closest("[data-press-section]")) {
       clearSelection();
@@ -783,7 +912,10 @@ function setupSectionTargeting() {
 function selectSection(el) {
   const doc = $iframe.contentDocument;
   if (!doc) return;
-  doc.querySelectorAll(".press-selected").forEach((s) => s.classList.remove("press-selected"));
+
+  // Clear any previous parent + sub state
+  doc.querySelectorAll(".press-selected, .press-parent-faded, .press-sub-selected")
+    .forEach((s) => s.classList.remove("press-selected", "press-parent-faded", "press-sub-selected"));
   el.classList.add("press-selected");
 
   selectedTarget = {
@@ -791,16 +923,39 @@ function selectSection(el) {
     label: el.getAttribute("data-press-label"),
     index: parseInt(el.getAttribute("data-press-section"), 10),
   };
+  selectedSubTarget = null;
   $targetLabel.textContent = selectedTarget.label;
   $targetPill.classList.add("show");
+}
+
+function selectSubElement(subEl, parentEl) {
+  const doc = $iframe.contentDocument;
+  if (!doc) return;
+
+  // Parent visually fades to "context"; sub becomes the active selection
+  parentEl.classList.remove("press-selected");
+  parentEl.classList.add("press-parent-faded");
+  doc.querySelectorAll(".press-sub-selected").forEach((s) => s.classList.remove("press-sub-selected"));
+  subEl.classList.add("press-sub-selected");
+
+  selectedSubTarget = {
+    kind: subEl.getAttribute("data-press-subsection"),
+    parentIndex: parseInt(parentEl.getAttribute("data-press-section"), 10),
+    parentType: parentEl.getAttribute("data-press-type"),
+    subIndex: parseInt(subEl.getAttribute("data-press-sub-index"), 10),
+    label: subEl.getAttribute("data-press-sub-label"),
+  };
+  $targetLabel.textContent = selectedSubTarget.label;
 }
 
 function clearSelection() {
   const doc = $iframe.contentDocument;
   if (doc) {
-    doc.querySelectorAll(".press-selected").forEach((s) => s.classList.remove("press-selected"));
+    doc.querySelectorAll(".press-selected, .press-parent-faded, .press-sub-selected")
+      .forEach((s) => s.classList.remove("press-selected", "press-parent-faded", "press-sub-selected"));
   }
   selectedTarget = null;
+  selectedSubTarget = null;
   $targetPill.classList.remove("show");
 }
 
