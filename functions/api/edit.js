@@ -1,71 +1,114 @@
 /**
- * STEP 2 DEBUG: minimal version + Gemini call.
- * If this works, the AI call path is fine and the bug is in diff/apply.
- * If this fails, the bug is in the Gemini call itself.
+ * STEP 3 DEBUG: instrument every step into a log array, return it in the
+ * response so we can see exactly where execution dies.
  */
 
 export async function onRequestGet({ request, env }) {
-  const url = new URL(request.url);
   return new Response(
     JSON.stringify({
       handler: "GET",
-      probe: url.searchParams.get("probe") === "1",
       hasGeminiKey: !!env.GEMINI_API_KEY,
       modelProvider: env.MODEL_PROVIDER || null,
     }),
-    { status: 200, headers: jsonHeaders() }
+    { status: 200, headers: { "content-type": "application/json" } }
   );
 }
 
 export async function onRequestPost({ request, env }) {
-  // Top-level try/catch to surface any error inline.
+  const log = [];
+  log.push("entered onRequestPost");
+
   try {
     let body;
     try {
       body = await request.json();
+      log.push("parsed body, has siteJson=" + !!body.siteJson);
     } catch (err) {
-      return errorResponse(400, "bad json: " + describe(err));
+      log.push("body parse threw: " + describe(err));
+      return logResponse(400, log);
     }
 
     if (!body || !body.siteJson || typeof body.siteJson !== "object") {
-      return errorResponse(400, "missing siteJson");
+      log.push("invalid body");
+      return logResponse(400, log);
     }
     if (typeof body.request !== "string" || body.request.length === 0) {
-      return errorResponse(400, "missing request string");
+      log.push("invalid request string");
+      return logResponse(400, log);
     }
+    log.push("validation passed");
 
     const provider = (env.MODEL_PROVIDER || "gemini").toLowerCase();
-    if (provider !== "gemini") {
-      return errorResponse(500, "only gemini supported in this debug build");
-    }
+    log.push("provider=" + provider);
+
     if (!env.GEMINI_API_KEY) {
-      return errorResponse(500, "GEMINI_API_KEY not configured");
+      log.push("no api key");
+      return logResponse(500, log);
     }
+    log.push("api key length=" + env.GEMINI_API_KEY.length);
 
-    // Call Gemini with a tiny system prompt + the user request.
-    let geminiResult;
+    log.push("about to build Gemini request");
+    const model = "gemini-2.5-flash";
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+      model +
+      ":generateContent?key=" +
+      env.GEMINI_API_KEY;
+    log.push("url length=" + url.length);
+
+    const reqBody = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text:
+                "Translate this request into a tiny JSON: {answer:'green'}. Request: " +
+                body.request,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 256,
+        responseMimeType: "application/json",
+      },
+    };
+    log.push("reqBody built");
+
+    const reqBodyStr = JSON.stringify(reqBody);
+    log.push("reqBody stringified, length=" + reqBodyStr.length);
+
+    log.push("calling fetch");
+    let r;
     try {
-      geminiResult = await callGemini(env.GEMINI_API_KEY, body.request, body.siteJson);
-    } catch (err) {
-      return errorResponse(502, "gemini error: " + describe(err), {
-        stack: err && err.stack ? String(err.stack).slice(0, 1000) : null,
+      r = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: reqBodyStr,
       });
+      log.push("fetch returned status=" + r.status);
+    } catch (err) {
+      log.push("fetch threw: " + describe(err));
+      return logResponse(502, log);
     }
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        provider: "gemini",
-        rawTextHead: geminiResult.rawText.slice(0, 300),
-        parsedKeys: Object.keys(geminiResult.parsed || {}),
-        parsed: geminiResult.parsed,
-      }),
-      { status: 200, headers: jsonHeaders() }
-    );
+    let rawText;
+    try {
+      rawText = await r.text();
+      log.push("read text, length=" + rawText.length);
+    } catch (err) {
+      log.push("text() threw: " + describe(err));
+      return logResponse(502, log);
+    }
+
+    log.push("first 100 chars of response: " + rawText.slice(0, 100));
+
+    return logResponse(r.ok ? 200 : 502, log);
   } catch (err) {
-    return errorResponse(500, "uncaught: " + describe(err), {
-      stack: err && err.stack ? String(err.stack).slice(0, 1000) : null,
-    });
+    log.push("UNCAUGHT: " + describe(err));
+    return logResponse(500, log);
   }
 }
 
@@ -76,108 +119,24 @@ export async function onRequestOptions() {
       "access-control-allow-origin": "*",
       "access-control-allow-methods": "POST, GET, OPTIONS",
       "access-control-allow-headers": "content-type",
-      "access-control-max-age": "86400",
     },
   });
 }
 
-async function callGemini(apiKey, userRequest, siteJson) {
-  const model = "gemini-2.5-flash";
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/" +
-    model +
-    ":generateContent?key=" +
-    apiKey;
-
-  const systemPrompt =
-    "You translate small business owners' natural-language change requests " +
-    "into a JSON diff against their site.json. " +
-    "Return ONLY a JSON object: " +
-    '{"narration": "<plain english>", "diff": [{"op": "set", "path": "<dot.path>", "value": <any>}], "confidence": 0.0, "warnings": []}';
-
-  const userPrompt =
-    "Current site.json: " +
-    JSON.stringify(siteJson) +
-    "\nRequest: " +
-    userRequest;
-
-  const reqBody = {
-    systemInstruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 1024,
-      responseMimeType: "application/json",
-    },
-  };
-
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(reqBody),
-  });
-
-  const rawText = await r.text();
-  if (!r.ok) {
-    throw new Error("gemini http " + r.status + ": " + rawText.slice(0, 400));
-  }
-
-  let topLevel;
-  try {
-    topLevel = JSON.parse(rawText);
-  } catch (err) {
-    throw new Error("gemini returned non-JSON: " + rawText.slice(0, 200));
-  }
-
-  const text =
-    topLevel &&
-    topLevel.candidates &&
-    topLevel.candidates[0] &&
-    topLevel.candidates[0].content &&
-    topLevel.candidates[0].content.parts &&
-    topLevel.candidates[0].content.parts[0] &&
-    topLevel.candidates[0].content.parts[0].text;
-
-  if (!text) {
-    throw new Error(
-      "gemini no text. Top-level keys: " + Object.keys(topLevel).join(",")
-    );
-  }
-
-  let parsed = null;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    // Model returned text that isn't JSON; return null `parsed` and let the
-    // raw text speak for itself.
-  }
-
-  return { rawText: text, parsed };
-}
-
-function jsonHeaders() {
-  return {
-    "content-type": "application/json; charset=utf-8",
-    "access-control-allow-origin": "*",
-  };
-}
-
-function errorResponse(status, message, extra) {
-  const body = { error: message };
-  if (extra) {
-    for (const k in extra) body[k] = extra[k];
-  }
-  return new Response(JSON.stringify(body), {
+function logResponse(status, log) {
+  return new Response(JSON.stringify({ status, log }), {
     status,
-    headers: jsonHeaders(),
+    headers: {
+      "content-type": "application/json",
+      "access-control-allow-origin": "*",
+    },
   });
 }
 
 function describe(err) {
-  if (err === null) return "null";
-  if (err === undefined) return "undefined";
+  if (!err) return String(err);
   if (typeof err === "string") return err;
-  if (err && err.message) return (err.name || "Error") + ": " + err.message;
+  if (err.message) return (err.name || "Error") + ": " + err.message;
   try {
     return JSON.stringify(err);
   } catch {
