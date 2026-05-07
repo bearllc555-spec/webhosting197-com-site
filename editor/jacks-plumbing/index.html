@@ -374,7 +374,7 @@ async function sendRequest() {
       appendAssistantMessage(result.payload);
     } else if (result.kind === "rate_limited") {
       // Rate-limit gets both Retry (likely to succeed after a wait) and Copy
-      appendErrorMessage("Hmm — Press is taking a breather. Wait a few seconds and try again.", {
+      appendErrorMessage("System busy. Try again in a few minutes.", {
         onRetry: () => retryRequest(request, payload),
         textToCopy: request,
       });
@@ -415,7 +415,7 @@ async function retryRequest(originalText, payload) {
     if (result.kind === "ok") {
       appendAssistantMessage(result.payload);
     } else if (result.kind === "rate_limited") {
-      appendErrorMessage("Still busy — wait a few more seconds and try again.", {
+      appendErrorMessage("Still busy. Try again in a few minutes.", {
         onRetry: () => retryRequest(originalText, payload),
         textToCopy: originalText,
       });
