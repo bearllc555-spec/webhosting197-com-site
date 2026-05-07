@@ -62,7 +62,7 @@
   .chat-head h2 { margin: 0 0 0.25rem 0; font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.015em; }
   .chat-head p { margin: 0; font-size: 0.8125rem; color: var(--slate); line-height: 1.5; }
   .messages { flex: 1; overflow-y: auto; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; min-height: 0; }
-  .messages:empty::before { content: "Try: \"make the hero green\" · \"4-column services\" · \"add a winter promo banner\""; display: block; padding: 1rem; font-size: 0.8125rem; color: var(--slate-light); font-style: italic; line-height: 1.5; text-align: center; }
+  .messages:empty::before { content: "Tip: click any text in the preview to edit it directly. Use chat for color, layout, or \"make it look better\" type changes."; display: block; padding: 1rem; font-size: 0.8125rem; color: var(--slate-light); font-style: italic; line-height: 1.5; text-align: center; }
 
   .msg { max-width: 92%; font-size: 0.9rem; line-height: 1.5; }
   .msg.user { align-self: flex-end; background: var(--primary); color: white; padding: 0.6rem 0.9rem; border-radius: 12px 12px 2px 12px; }
@@ -103,6 +103,7 @@
   .composer { border-top: 1px solid var(--rule); padding: 0.85rem 1rem; background: white; }
   .composer-input { width: 100%; border: 1px solid var(--rule-strong); border-radius: 10px; padding: 0.7rem 0.9rem; font-family: inherit; font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
   .composer-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  .composer-input:focus::placeholder { color: white; }
   .composer-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.72rem; color: var(--slate); }
   .composer-send { padding: 0.45rem 0.95rem; font-size: 0.8125rem; }
 
@@ -741,11 +742,24 @@ function formatValue(value, path) {
 /* ---------- apply diff ---------- */
 
 function applyDiff(narration, proposedSite, btn, diffOps) {
-  // Replace the message's action buttons with a "applied" indicator
   const actions = btn.parentElement;
-  actions.innerHTML = `<span style="font-size:0.8rem; color:var(--green)">✓ Applied</span>`;
 
-  // Push to history
+  // B12: filter out no-op SET ops where the new value already matches the
+  // current site state. These produce theatrical Apply clicks that don't
+  // visibly change anything, and they pollute history.
+  const meaningfulOps = (diffOps || []).filter((op) => {
+    if (op.op !== "set") return true; // pass-through non-SET ops
+    const current = readSitePath(currentSite, op.path);
+    return op.value !== current;
+  });
+
+  // If everything was a no-op, don't pretend we changed anything.
+  if (meaningfulOps.length === 0) {
+    actions.innerHTML = `<span style="font-size:0.8rem; color:var(--slate)">No change needed — values already match.</span>`;
+    return;
+  }
+
+  // Push to history (only meaningful changes go in)
   history.unshift({
     siteJson: structuredClone(proposedSite),
     narration,
@@ -756,15 +770,121 @@ function applyDiff(narration, proposedSite, btn, diffOps) {
   // Apply visual changes to iframe in-place where possible
   patchIframePreview(currentSite);
 
-  // Persist the diff ops to localStorage so refresh-replay can restore them
-  if (Array.isArray(diffOps) && diffOps.length > 0) {
-    pushDiffOps(diffOps);
+  // Persist the meaningful diff ops to localStorage so refresh-replay restores them
+  pushDiffOps(meaningfulOps);
+
+  // A5: pulse-highlight every DOM element affected by these ops, and count them
+  // so the chat tells the truth about scope ("4 elements changed", not just "Applied").
+  let affectedCount = 0;
+  const doc = $iframe.contentDocument;
+  if (doc) {
+    const affected = new Set();
+    meaningfulOps.forEach((op) => {
+      findElementsAffectedByOp(doc, op).forEach((el) => affected.add(el));
+    });
+    pulseAffectedElements(affected);
+    affectedCount = affected.size;
   }
 
-  // Refresh history pane
-  renderHistory();
+  const countSuffix = affectedCount > 1 ? ` · ${affectedCount} elements changed` : "";
+  actions.innerHTML = `<span style="font-size:0.8rem; color:var(--green)">✓ Applied${countSuffix}</span>`;
 
+  renderHistory();
   flashSaveStatus(`Applied · ${narration.slice(0, 40)}${narration.length > 40 ? "..." : ""}`);
+}
+
+// Read the value at a dot/bracket path inside the site JSON. Mirror of
+// setSitePath. Returns undefined if the path doesn't resolve.
+function readSitePath(obj, path) {
+  const re = /([^.[\]]+)|\[(\d+)\]/g;
+  const tokens = [];
+  let m;
+  while ((m = re.exec(path)) !== null) {
+    if (m[1]) tokens.push({ key: m[1] });
+    else if (m[2] !== undefined) tokens.push({ idx: parseInt(m[2], 10) });
+  }
+  let cur = obj;
+  for (const t of tokens) {
+    if (cur === undefined || cur === null) return undefined;
+    cur = ("key" in t) ? cur[t.key] : cur[t.idx];
+  }
+  return cur;
+}
+
+// Given a diff op, return the DOM elements inside the iframe whose visible state
+// reflects the schema field at that path. Powers the A5 pulse + count display.
+// Mirrors the selector logic in applyOpToIframe — keep these two functions in sync.
+function findElementsAffectedByOp(doc, op) {
+  if (op.op !== "set") return [];
+  const path = op.path;
+
+  if (path === "brand.colors.primary") {
+    return Array.from(doc.querySelectorAll(".btn-primary, .hero-cta, .nav-cta, .cta-btn"));
+  }
+  if (path === "brand.colors.accent") {
+    return Array.from(doc.querySelectorAll("[class*='accent']"));
+  }
+  if (path === "business.name") {
+    return Array.from(doc.querySelectorAll(".brand-logo, .footer-brand"));
+  }
+  if (path === "business.contact.phone") {
+    return Array.from(doc.querySelectorAll(".nav-cta, .hero-cta, .cta-btn, .footer-link[href^='tel:']"));
+  }
+  if (path === "business.contact.address") {
+    return Array.from(doc.querySelectorAll(".footer-address, .footer-link.footer-address"));
+  }
+  if (path === "business.tagline") {
+    return Array.from(doc.querySelectorAll(".footer-tagline"));
+  }
+
+  // sections[N].props.<field> — single element inside the tagged section
+  const sectionMatch = path.match(/^sections\[(\d+)\]\.props\.([\w_]+)$/);
+  if (sectionMatch) {
+    const idx = parseInt(sectionMatch[1], 10);
+    const prop = sectionMatch[2];
+    const section = doc.querySelector('[data-press-section="' + idx + '"]');
+    if (!section) return [];
+    if (prop === "headline")    return [section.querySelector("h1")].filter(Boolean);
+    if (prop === "subheadline") return [section.querySelector(".lead.hero-sub, .hero-sub, .lead")].filter(Boolean);
+    if (prop === "heading")     return [section.querySelector("h2")].filter(Boolean);
+    if (prop === "subheading")  return [section.querySelector(".cta-sub, .lead.cta-sub")].filter(Boolean);
+    if (prop === "cta_label")   return Array.from(section.querySelectorAll(".btn, .hero-cta, .cta-btn, .nav-cta"));
+    if (prop === "cta_href")    return Array.from(section.querySelectorAll("a.btn, a.hero-cta, a.cta-btn, a.nav-cta"));
+    return [];
+  }
+
+  // Testimonials: sections[N].props.testimonials[M].<field>
+  const testMatch = path.match(/^sections\[(\d+)\]\.props\.testimonials\[(\d+)\]\.([\w_]+)$/);
+  if (testMatch) {
+    const sidx = parseInt(testMatch[1], 10);
+    const tidx = parseInt(testMatch[2], 10);
+    const section = doc.querySelector('[data-press-section="' + sidx + '"]');
+    if (!section) return [];
+    const card = section.querySelectorAll(".testimonial-card")[tidx];
+    return card ? [card] : [];
+  }
+
+  // Top-level services[N].<field>
+  const serviceMatch = path.match(/^services\[(\d+)\]\.([\w_]+)$/);
+  if (serviceMatch) {
+    const idx = parseInt(serviceMatch[1], 10);
+    const card = doc.querySelectorAll(".service-card")[idx];
+    return card ? [card] : [];
+  }
+
+  return [];
+}
+
+// Add a brief amber pulse outline to each element so the customer SEES exactly
+// what changed. Auto-clears after the animation finishes.
+function pulseAffectedElements(set) {
+  set.forEach((el) => {
+    el.classList.remove("press-pulse-affected");
+    // Force reflow so re-adding the class restarts the animation
+    void el.offsetWidth;
+    el.classList.add("press-pulse-affected");
+    setTimeout(() => el.classList.remove("press-pulse-affected"), 1300);
+  });
 }
 
 function patchIframePreview(site) {
@@ -1280,6 +1400,18 @@ function setupSectionTargeting() {
     "  outline: 2px solid rgba(16, 185, 129, 0.85) !important;",
     "  caret-color: rgb(15, 23, 42);",
     "}",
+    /* ---- Step 4 (A5): pulse highlight on AI-applied global changes ---- */
+    "@keyframes press-pulse-affected {",
+    "  0%   { outline-color: rgba(245, 158, 11, 0); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }",
+    "  20%  { outline-color: rgba(245, 158, 11, 0.95); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.20); }",
+    "  100% { outline-color: rgba(245, 158, 11, 0); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }",
+    "}",
+    ".press-pulse-affected {",
+    "  outline: 2px solid transparent;",
+    "  outline-offset: 3px;",
+    "  border-radius: 4px;",
+    "  animation: press-pulse-affected 1.2s ease-out;",
+    "}",
   ].join("\n");
   doc.head.appendChild(style);
 
@@ -1745,6 +1877,7 @@ function clearSelection() {
     doc.querySelectorAll(".press-selected, .press-parent-faded, .press-sub-selected")
       .forEach((s) => s.classList.remove("press-selected", "press-parent-faded", "press-sub-selected"));
   }
+  $targetLabel.textContent = ""; // B13: don't leave stale label hanging
   selectedTarget = null;
   selectedSubTarget = null;
   $targetPill.classList.remove("show");
