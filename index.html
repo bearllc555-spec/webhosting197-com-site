@@ -32,7 +32,7 @@
   --max:1080px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:96px}
 body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";letter-spacing:-.005em}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
@@ -91,28 +91,50 @@ body.menu-open .topnav-burger span:nth-child(3){transform:translateY(-6px) rotat
 .eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;background:var(--bg-card);border:1px solid var(--rule-strong);border-radius:999px;font-size:12.5px;font-weight:500;color:var(--ink-soft);margin-bottom:32px}
 .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);animation:dotPulse 2.4s ease-out infinite}
 @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes eyebrowGlow{0%,100%{box-shadow:0 0 0 0 rgba(5,150,105,0);text-shadow:0 0 0 rgba(5,150,105,0)}50%{box-shadow:0 0 18px 0 rgba(5,150,105,.42);text-shadow:0 0 6px rgba(5,150,105,.55)}}
+.eyebrow{animation:eyebrowGlow 2.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.eyebrow{animation:none}}
 h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-height:1.02;color:var(--ink);max-width:18ch;margin:0 auto}
 .h1-reveal .word{display:inline-block;white-space:nowrap}
 .h1-reveal .space{display:inline-block}
 .h1-reveal .letter{display:inline-block;opacity:0;transform:translateY(8px);animation:letterIn .55s cubic-bezier(.2,.7,.2,1) forwards;will-change:opacity,transform}
 @keyframes letterIn{to{opacity:1;transform:translateY(0)}}
+.h1-reveal .em-letter{color:var(--blue);font-weight:700}
 .price-amount.counting{font-variant-numeric:tabular-nums}
 @media(prefers-reduced-motion:reduce){.h1-reveal .letter{opacity:1;filter:none;transform:none;animation:none}}
 .lead{font-size:clamp(16px,1.4vw,19px);color:var(--ink-soft);max-width:54ch;line-height:1.55;margin:24px auto 0}
 
 /* PRICING CARD */
 .pricing-section{padding:64px 32px 24px;max-width:var(--max);margin:0 auto}
+.pricing-grid{display:grid;grid-template-columns:1fr;gap:48px;align-items:start}
+@media(min-width:920px){
+  .pricing-grid{grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:72px;align-items:start;justify-content:center}
+  .pricing-card{margin:0 !important;width:100%}
+}
+.pricing-side{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:480px;margin:0 auto}
+@media(max-width:919px){.pricing-side{padding-top:48px;margin-top:8px;border-top:1px solid var(--rule)}}
+.pricing-side .apps-tagline{font-size:clamp(22px,2.4vw,28px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin-bottom:12px;line-height:1.15}
+.pricing-side .apps-sub{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin:0 auto 28px;max-width:42ch}
+.pricing-side .apps-sub strong{color:var(--ink);font-weight:600}
+.pricing-side .phone-mock{margin:0 0 28px}
+.pricing-side .apps-eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:12px}
+.pricing-side .apps-badges{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
 .pricing-card{background:var(--bg);border:1px solid var(--rule-strong);border-radius:20px;padding:48px;max-width:520px;margin:0 auto;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.02),0 8px 32px rgba(0,0,0,.04)}
 .pricing-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--blue);background:var(--blue-soft);padding:.32rem .72rem;border-radius:999px;margin-bottom:24px}
 .price-was-big{font-size:32px;font-weight:600;color:var(--slate);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:#B0B0B6;letter-spacing:-.025em;line-height:1;margin-bottom:8px;display:inline-block}
-.founder-remaining{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.founder-remaining{font-variant-numeric:tabular-nums;font-weight:700;color:var(--blue)}
+.founder-bar{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;margin-bottom:18px;max-width:280px}
+.stripe-cta{display:inline-flex;align-items:center;gap:.5rem;width:100%;justify-content:center;padding:.95rem 1.4rem;font-size:15.5px;font-weight:600;border-radius:10px;text-decoration:none;margin-bottom:8px;box-shadow:0 1px 2px rgba(37,99,235,.18),0 4px 12px rgba(37,99,235,.16)}
+.stripe-cta svg{width:16px;height:16px}
+.cta-divider{font-size:13px;color:var(--slate);text-align:center;margin:6px 0 14px;font-weight:500;letter-spacing:.01em}
+.founder-bar-fill{height:100%;background:var(--blue);border-radius:2px;width:0%;transition:width 1.2s cubic-bezier(.2,.7,.3,1)}
 .price-display{display:flex;align-items:baseline;gap:0;margin-bottom:6px}
-.price-currency{font-size:36px;font-weight:600;color:var(--ink);letter-spacing:-.03em;line-height:1}
-.price-amount{font-size:84px;font-weight:600;color:var(--ink);letter-spacing:-.045em;line-height:.95;display:inline-block;transform-origin:left center}
+.price-currency{font-size:42px;font-weight:600;color:var(--ink);letter-spacing:-.045em;line-height:.95}
+.price-amount{font-size:42px;font-weight:600;color:var(--ink);letter-spacing:-.045em;line-height:.95;display:inline-block;transform-origin:left center}
 @keyframes priceFlash{0%{transform:scale(1);color:var(--ink)}40%{transform:scale(1.06);color:var(--blue)}100%{transform:scale(1);color:var(--ink)}}
 .price-amount.flash{animation:priceFlash 420ms cubic-bezier(.4,0,.2,1)}
 .price-suffix{font-size:18px;color:var(--ink-soft);font-weight:500;margin-left:-4px}
-.price-detail{font-size:14px;color:var(--slate);margin-bottom:6px}
+.price-detail{font-size:15.5px;color:var(--ink-soft);margin-bottom:10px;font-weight:500}
 .price-aftermath{font-size:12.5px;color:var(--slate);opacity:.8;margin-bottom:28px;font-style:italic}
 .price-desc{font-size:15.5px;color:var(--ink-soft);line-height:1.55;margin-bottom:32px}
 .pricing-card .btn-primary{padding:.85rem 1.4rem;font-size:15px;font-weight:600;border-radius:10px;width:100%;justify-content:center}
@@ -161,16 +183,16 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
 /* DETAILS */
 .details{padding:80px 32px 96px;max-width:var(--max);margin:0 auto}
+.details-title{font-size:clamp(24px,2.6vw,32px);font-weight:700;color:var(--ink);margin:0 auto 48px;text-align:center;letter-spacing:-.025em;max-width:36ch}
+@media(max-width:600px){.details-title{margin-bottom:32px}}
 .details-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
 .detail-item h3{font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:10px;letter-spacing:-.01em}
 .detail-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6}
 @media(max-width:760px){.details-grid{grid-template-columns:1fr;gap:28px}}
 
 /* App store badges + Designed-for-mobile callout + phone mock */
-.apps-section{padding:24px 32px 24px;max-width:var(--max);margin:0 auto;text-align:center}
-.apps-inner{max-width:760px;margin:0 auto;padding:64px 0 40px;border-top:1px solid var(--rule)}
 .apps-tagline{font-size:clamp(24px,2.8vw,34px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin-bottom:14px;line-height:1.12}
-.apps-tagline em{font-style:italic;color:var(--blue);font-weight:700}
+.apps-tagline em{font-style:normal;color:var(--blue);font-weight:700}
 .apps-sub{font-size:15.5px;color:var(--ink-soft);line-height:1.6;margin:0 auto 32px;max-width:54ch}
 .apps-sub strong{color:var(--ink);font-weight:600}
 .apps-eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:14px}
@@ -225,8 +247,6 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   .hero{padding:56px 20px 24px}
   .pricing-section{padding:32px 20px 16px}
   .pricing-card{padding:32px 24px;border-radius:16px}
-  .price-amount{font-size:64px}
-  .price-currency{font-size:28px}
   .details{padding:56px 20px 64px}
   .faq{padding:24px 20px 64px}
 }
@@ -268,17 +288,27 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 </section>
 
 <section class="pricing-section" id="pricing">
+  <div class="pricing-grid">
   <div class="pricing-card">
     <span class="pricing-tag">lifetime</span>
     <div class="price-was-big">$197</div>
     <div class="price-display">
       <span class="price-currency">$</span>
-      <span class="price-amount">147</span>
+      <span class="price-amount" id="priceAmount">147</span>
       <span class="price-suffix">once</span>
     </div>
     <p class="price-detail">Founder pricing &middot; <span class="founder-remaining" id="founderRemaining">50</span> of 50 spots left.</p>
+    <div class="founder-bar" aria-hidden="true"><div class="founder-bar-fill" id="founderBarFill"></div></div>
     <p class="price-aftermath">Standard price after the first 50: $197.</p>
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
+
+    <!-- Stripe paid-founder CTA: locks in current climbing-price founder slot -->
+    <a id="stripeCheckout" class="btn btn-primary stripe-cta" href="https://buy.stripe.com/9B628t0oA6kp4ZP8nae3e00" target="_blank" rel="noopener">
+      Reserve now &middot; pay $<span id="ctaPrice">147</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </a>
+    <div class="cta-divider" aria-hidden="true">or just get notified</div>
+
     <!-- State 1: email entry -->
     <div class="reserve-state active" id="state1">
       <form class="reserve-form" id="emailForm" novalidate>
@@ -329,29 +359,8 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       </div>
     </div>
   </div>
-</section>
-
-<section class="details" id="how">
-  <div class="details-grid">
-    <div class="detail-item">
-      <h3>Built like a domain.</h3>
-      <p>You buy a domain once and own it. Hosting should work the same way. $197 once and the site is yours, hosted forever.</p>
-    </div>
-    <div class="detail-item">
-      <h3>Run on the Fortune 500's network.</h3>
-      <p>Your site lives on the same edge infrastructure that the world's largest sites run on, scaled to one website with predictable economics.</p>
-    </div>
-    <div class="detail-item">
-      <h3>AI keeps it alive.</h3>
-      <p>AI builds the initial site, patches it, and rewrites copy as your hours, services, or pricing change. You don't touch the dashboard unless you want to.</p>
-    </div>
-  </div>
-</section>
-
-
-<section class="apps-section">
-  <div class="apps-inner">
-    <h2 class="apps-tagline">Designed for mobile, <em>on mobile.</em></h2>
+  <aside class="pricing-side">
+<h2 class="apps-tagline">Designed for mobile, <em>on mobile.</em></h2>
     <p class="apps-sub">The web app and the mobile app are <strong>the same UI</strong>. Same nav, same buttons, same flows. Use it on your laptop and you&rsquo;re already trained for the phone &mdash; pick up either, no new learning curve.</p>
     <div class="phone-mock" aria-hidden="true">
       <div class="phone-frame">
@@ -375,6 +384,25 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     <div class="apps-badges">
       <a href="#pricing" class="apps-badge" aria-label="Coming to the Apple App Store"><svg class="badge-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg><span class="badge-text"><span class="badge-line1">Coming soon to</span><span class="badge-line2">App Store</span></span></a>
       <a href="#pricing" class="apps-badge" aria-label="Coming to Google Play"><svg class="badge-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="pgrad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00DCFF"/><stop offset="100%" stop-color="#00A0F4"/></linearGradient><linearGradient id="pgrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFCE00"/><stop offset="100%" stop-color="#FFB000"/></linearGradient><linearGradient id="pgrad3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF3A44"/><stop offset="100%" stop-color="#C31162"/></linearGradient><linearGradient id="pgrad4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00F076"/><stop offset="100%" stop-color="#00B373"/></linearGradient></defs><path d="M3.5 2.5v19l8-9.5z" fill="url(#pgrad4)"/><path d="M3.5 2.5l11.5 6L19 6.7c-.3-.3-.7-.4-1.2-.2L3.5 2.5z" fill="url(#pgrad1)"/><path d="M3.5 21.5l14.3-3.9c.5-.2.9-.3 1.2-.6L15 14.5z" fill="url(#pgrad3)"/><path d="M19 17c.5-.3.8-.7.8-1.2v-7.6c0-.5-.3-.9-.8-1.2L15 9.5l4 2.5z" fill="url(#pgrad2)"/></svg><span class="badge-text"><span class="badge-line1">Coming soon to</span><span class="badge-line2">Google Play</span></span></a>
+    </div>
+  </aside>
+  </div>
+</section>
+
+<section class="details" id="how">
+  <h2 class="details-title">How it works</h2>
+  <div class="details-grid">
+    <div class="detail-item">
+      <h3>Built like a domain.</h3>
+      <p>You buy a domain once and own it. Hosting should work the same way. $197 once and the site is yours, hosted forever.</p>
+    </div>
+    <div class="detail-item">
+      <h3>Run on the Fortune 500's network.</h3>
+      <p>Your site lives on the same edge infrastructure that the world's largest sites run on, scaled to one website with predictable economics.</p>
+    </div>
+    <div class="detail-item">
+      <h3>AI keeps it alive.</h3>
+      <p>AI builds the initial site, patches it, and rewrites copy as your hours, services, or pricing change. You don't touch the dashboard unless you want to.</p>
     </div>
   </div>
 </section>
@@ -477,6 +505,49 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       amt.classList.add('flash');
       setTimeout(function(){amt.classList.remove('flash');if(done)done();},420);
     }
+    function confettiBurst(cx,cy){
+      if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+      var container=document.createElement('div');
+      container.style.cssText='position:fixed;left:'+cx+'px;top:'+cy+'px;width:0;height:0;pointer-events:none;z-index:60;';
+      document.body.appendChild(container);
+      var hues=['#2563EB','#1D4ED8','#3B82F6','#60A5FA','#93C5FD'];
+      var particles=[];
+      var N=44;
+      for(var i=0;i<N;i++){
+        var el=document.createElement('div');
+        var w=6+Math.random()*4;
+        var h=10+Math.random()*8;
+        var hue=hues[Math.floor(Math.random()*hues.length)];
+        el.style.cssText='position:absolute;left:0;top:0;width:'+w+'px;height:'+h+'px;background:'+hue+';will-change:transform,opacity;border-radius:1px;';
+        container.appendChild(el);
+        var angle=Math.random()*Math.PI*2;
+        var speed=220+Math.random()*340;
+        particles.push({el:el,x:0,y:0,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-160,rot:Math.random()*360,vr:(Math.random()-0.5)*900,hw:w/2,hh:h/2});
+      }
+      var start=performance.now();
+      var dur=1700;
+      var gravity=900;
+      var lastT=start;
+      function tick(now){
+        var elapsed=now-start;
+        var dt=Math.min((now-lastT)/1000,0.04);
+        lastT=now;
+        if(elapsed>dur){container.remove();return;}
+        var t=elapsed/dur;
+        var op=Math.max(0,1-t*t);
+        for(var j=0;j<particles.length;j++){
+          var p=particles[j];
+          p.vy+=gravity*dt;
+          p.x+=p.vx*dt;
+          p.y+=p.vy*dt;
+          p.rot+=p.vr*dt;
+          p.el.style.transform='translate('+(p.x-p.hw)+'px,'+(p.y-p.hh)+'px) rotate('+p.rot+'deg)';
+          p.el.style.opacity=op;
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
     function run(){
       if(fired)return;fired=true;
       amt.classList.add('counting');
@@ -486,7 +557,9 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
         flashOnce(function(){
           // Phase 3: 197 -> 147 slow tick (easeOutQuad)
           tickPhase(197,147,2000,function(p){return 1-Math.pow(1-p,2);},function(){
-            // Phase 4: flash 147 (founder price)
+            // Phase 4: flash 147 (founder price) + confetti burst while blue
+            var rect=amt.getBoundingClientRect();
+            confettiBurst(rect.left+rect.width/2,rect.top+rect.height/2);
             flashOnce();
           });
         });
@@ -494,8 +567,8 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     }
     if('IntersectionObserver' in window){
       var io=new IntersectionObserver(function(entries){
-        entries.forEach(function(e){if(e.isIntersecting){run();io.disconnect();}});
-      },{threshold:0.4});
+        entries.forEach(function(e){if(e.isIntersecting){setTimeout(run,500);io.disconnect();}});
+      },{rootMargin:'-40% 0px -40% 0px',threshold:0});
       io.observe(amt);
     }else{run();}
   }
@@ -592,13 +665,33 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   if(resendBack){resendBack.addEventListener('click',function(){showState(1);setTimeout(function(){emailInput.focus();},80);});}
   if(codeInput){codeInput.addEventListener('input',function(e){var v=e.target.value.replace(/\D/g,'');if(v!==e.target.value)e.target.value=v;});}
 
-  // Live founder spot counter
+  // Live founder spot counter + climbing price + Stripe CTA wiring
   (function(){
-    var el=document.getElementById('founderRemaining');
-    if(!el)return;
-    fetch('/api/founder-count').then(function(r){return r.json();}).then(function(j){
-      if(typeof j.remaining==='number')el.textContent=j.remaining;
-    }).catch(function(){});
+    var STRIPE_LINK='https://buy.stripe.com/9B628t0oA6kp4ZP8nae3e00';
+    var remEl=document.getElementById('founderRemaining');
+    var bar=document.getElementById('founderBarFill');
+    var priceEl=document.getElementById('priceAmount');
+    var ctaPriceEl=document.getElementById('ctaPrice');
+    var stripeBtn=document.getElementById('stripeCheckout');
+    if(!stripeBtn)return;
+    fetch('/api/founder-coupon').then(function(r){return r.json();}).then(function(j){
+      var claimed=(typeof j.claimedCount==='number')?j.claimedCount:0;
+      var remaining=Math.max(0,50-claimed);
+      var price=(typeof j.currentPrice==='number')?j.currentPrice:197;
+      if(remEl)remEl.textContent=remaining;
+      if(bar)bar.style.width=(claimed/50*100)+'%';
+      if(priceEl)priceEl.textContent=price;
+      if(ctaPriceEl)ctaPriceEl.textContent=price;
+      if(j.founderActive && j.code){
+        stripeBtn.href=STRIPE_LINK+'?prefilled_promo_code='+encodeURIComponent(j.code);
+      }else{
+        // All 50 founders claimed — standard $197 path, no promo prefill
+        stripeBtn.href=STRIPE_LINK;
+      }
+    }).catch(function(){
+      // /api/founder-coupon unreachable — fail soft, leave button at default $147 splash text
+      stripeBtn.href=STRIPE_LINK;
+    });
   })();
 
   // What's-included: strictly sequential cascade. Each line types out letter-by-letter, check appears, THEN next line starts.
@@ -697,11 +790,4 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     });
     // Close on Escape
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&menu.classList.contains('open'))closeMenu();
-    });
-  })();
-})();
-</script>
-
-</body>
-</html>
+      if(e.key==='Esca
