@@ -1244,10 +1244,25 @@ function setupSectionTargeting() {
     "  outline-color: rgba(245, 158, 11, 0.95);",
     "  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.18);",
     "}",
+    /* ---- Step 2: inline text editing ---- */
+    "[data-press-text-edit] { cursor: text; }",
+    "[data-press-text-edit]:hover { cursor: text; }",
+    "[data-press-text-edit].press-editing {",
+    "  outline: 2px solid rgba(16, 185, 129, 0.85) !important;",
+    "  outline-offset: 3px;",
+    "  background: rgba(16, 185, 129, 0.06) !important;",
+    "  border-radius: 4px;",
+    "  cursor: text;",
+    "}",
+    "[data-press-text-edit][contenteditable]:focus {",
+    "  outline: 2px solid rgba(16, 185, 129, 0.85) !important;",
+    "  caret-color: rgb(15, 23, 42);",
+    "}",
   ].join("\n");
   doc.head.appendChild(style);
 
-  // Tag each known section
+  // Tag each known section + sub-elements (data attributes only — no per-element
+  // click listeners; we delegate from doc.body below).
   let parentIdx = 0;
   SECTION_SELECTORS.forEach((spec) => {
     const els = Array.from(doc.querySelectorAll(spec.selector));
@@ -1256,7 +1271,6 @@ function setupSectionTargeting() {
       el.setAttribute("data-press-type", spec.type);
       el.setAttribute("data-press-label", spec.label);
 
-      // Tag sub-elements within this parent
       const subs = SUB_SELECTORS_BY_PARENT[spec.type] || [];
       subs.forEach((subSpec) => {
         const subEls = Array.from(el.querySelectorAll(subSpec.selector));
@@ -1265,44 +1279,72 @@ function setupSectionTargeting() {
           subEl.setAttribute("data-press-subsection", subSpec.kind);
           subEl.setAttribute("data-press-sub-index", String(subIdx));
           subEl.setAttribute("data-press-sub-label", subSpec.label(subEl, subIdx));
-          subEl.addEventListener("click", (e) => {
-            // Only act on sub-element clicks if its parent is currently selected
-            const parent = subEl.closest("[data-press-section]");
-            if (!parent) return;
-            if (selectedTarget && selectedTarget.index === parseInt(parent.getAttribute("data-press-section"), 10)) {
-              e.preventDefault();
-              e.stopPropagation();
-              selectSubElement(subEl, parent);
-            }
-          });
         });
       });
 
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        selectSection(el);
-      });
       parentIdx++;
     });
   });
 
-  // Intercept ALL link clicks inside the iframe so customers don't accidentally
-  // navigate away from their own site while editing. Their click still selects
-  // the parent section it sits in (if any), preserving the targeting flow.
+  // Tag text-bearing fields inside sections for inline edit (Step 2)
+  tagEditableTexts(doc);
+
+  // Intercept ALL link clicks inside the iframe so accidental link presses
+  // don't navigate the iframe away while the customer is editing.
   doc.querySelectorAll("a[href]").forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
-      // Don't stop propagation — let the parent-section click handler still fire
     }, true /* useCapture */);
   });
 
-  // Click anywhere outside any tagged section clears all selection
+  // Single delegated click handler with four outcomes:
+  //   1. Already inline-editing the clicked element → let cursor placement happen
+  //   2. data-press-text-edit element → enter inline edit mode (no AI, no chat)
+  //   3. data-press-subsection element → AI sub-select (no two-click rule)
+  //   4. data-press-section element → AI parent-select
+  //   5. Click outside any tag → clear all selection
+  // Capture phase + stopPropagation beats any internal page handlers.
   doc.body.addEventListener("click", (e) => {
-    if (!e.target.closest("[data-press-section]")) {
-      clearSelection();
+    // 1. Click inside the active editor — let the browser handle cursor placement
+    if (activelyEditing && activelyEditing.el && activelyEditing.el.contains(e.target)) {
+      return;
     }
-  });
+    // Different element clicked — if there's an active edit, commit it first
+    if (activelyEditing) commitInlineEdit();
+
+    // 2. Inline text edit
+    const textEl = e.target.closest("[data-press-text-edit]");
+    if (textEl) {
+      e.preventDefault();
+      e.stopPropagation();
+      enterInlineEdit(textEl);
+      return;
+    }
+
+    // 3. Container sub-element AI select (single click, no two-click rule)
+    const subEl = e.target.closest("[data-press-subsection]");
+    if (subEl) {
+      const parent = subEl.closest("[data-press-section]");
+      if (parent) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectSubElement(subEl, parent);
+        return;
+      }
+    }
+
+    // 4. Section parent AI select
+    const sectionEl = e.target.closest("[data-press-section]");
+    if (sectionEl) {
+      e.preventDefault();
+      e.stopPropagation();
+      selectSection(sectionEl);
+      return;
+    }
+
+    // 5. Click outside any tagged thing — clear AI selection
+    clearSelection();
+  }, true /* capture */);
 }
 
 function selectSection(el) {
@@ -1342,6 +1384,218 @@ function selectSubElement(subEl, parentEl) {
     label: subEl.getAttribute("data-press-sub-label"),
   };
   $targetLabel.textContent = selectedSubTarget.label;
+}
+
+/* ---------- inline text editing (Step 2) ----------
+ *
+ * Direct manipulation of text in the iframe — Word/Docs pattern. Click a
+ * text-bearing element, cursor lands, type to edit. Enter or click-outside
+ * commits; Esc reverts. NO AI roundtrip for text changes.
+ *
+ * The diff op is generated locally and pushed to the same localStorage stack
+ * Apply uses, so refresh persists the edit and the topbar truth-state lights
+ * up amber as expected. The chat panel stays for AI-shaped requests (color,
+ * layout, structural changes, ambiguous intent).
+ */
+
+let activelyEditing = null;
+
+function tagEditableTexts(doc) {
+  doc.querySelectorAll("[data-press-section]").forEach((section) => {
+    const sectionIdx = parseInt(section.getAttribute("data-press-section"), 10);
+    const type = section.getAttribute("data-press-type");
+
+    if (type === "hero") {
+      tagText(section.querySelector("h1"),
+        { kind: "headline", label: "the main headline",
+          path: "sections[" + sectionIdx + "].props.headline", multiline: false });
+      tagText(section.querySelector(".lead.hero-sub, .hero-sub, .lead"),
+        { kind: "subheadline", label: "the subheadline",
+          path: "sections[" + sectionIdx + "].props.subheadline", multiline: true });
+    }
+    if (type === "services_grid") {
+      tagText(section.querySelector("h2"),
+        { kind: "heading", label: "the section heading",
+          path: "sections[" + sectionIdx + "].props.heading", multiline: false });
+      Array.from(section.querySelectorAll(".service-card")).forEach((card, cardIdx) => {
+        tagText(card.querySelector("h3, h4, .service-title"),
+          { kind: "service_name", label: "service name",
+            path: "services[" + cardIdx + "].name", multiline: false });
+        tagText(card.querySelector("p, .service-desc"),
+          { kind: "service_description", label: "service description",
+            path: "services[" + cardIdx + "].description", multiline: true });
+      });
+    }
+    if (type === "testimonials") {
+      tagText(section.querySelector("h2"),
+        { kind: "heading", label: "the section heading",
+          path: "sections[" + sectionIdx + "].props.heading", multiline: false });
+      Array.from(section.querySelectorAll(".testimonial-card")).forEach((card, cardIdx) => {
+        tagText(card.querySelector(".quote, blockquote, p:not(.author):not(.role)"),
+          { kind: "testimonial_quote", label: "testimonial quote",
+            path: "sections[" + sectionIdx + "].props.testimonials[" + cardIdx + "].quote", multiline: true });
+        tagText(card.querySelector(".author"),
+          { kind: "testimonial_author", label: "testimonial author",
+            path: "sections[" + sectionIdx + "].props.testimonials[" + cardIdx + "].author", multiline: false });
+        tagText(card.querySelector(".role"),
+          { kind: "testimonial_role", label: "testimonial role",
+            path: "sections[" + sectionIdx + "].props.testimonials[" + cardIdx + "].role", multiline: false });
+      });
+    }
+    if (type === "cta") {
+      tagText(section.querySelector("h2"),
+        { kind: "heading", label: "the call-out heading",
+          path: "sections[" + sectionIdx + "].props.heading", multiline: false });
+      tagText(section.querySelector(".cta-sub, .lead.cta-sub"),
+        { kind: "subheading", label: "the line under the call-out heading",
+          path: "sections[" + sectionIdx + "].props.subheading", multiline: true });
+    }
+  });
+}
+
+function tagText(el, info) {
+  if (!el) return;
+  if (el.hasAttribute("data-press-text-edit")) return;
+  el.setAttribute("data-press-text-edit", info.kind);
+  el.setAttribute("data-press-text-edit-path", info.path);
+  el.setAttribute("data-press-text-edit-label", info.label);
+  if (info.multiline) el.setAttribute("data-press-text-edit-multiline", "true");
+}
+
+function enterInlineEdit(el) {
+  if (activelyEditing && activelyEditing.el === el) return;
+  if (activelyEditing) commitInlineEdit();
+  // AI selection state has nothing to do with text edits — clear it for clarity
+  clearSelection();
+
+  const info = {
+    kind: el.getAttribute("data-press-text-edit"),
+    path: el.getAttribute("data-press-text-edit-path"),
+    label: el.getAttribute("data-press-text-edit-label"),
+    multiline: el.hasAttribute("data-press-text-edit-multiline"),
+  };
+  const originalText = info.multiline ? el.textContent : el.textContent.trim();
+
+  // contenteditable=plaintext-only blocks pasted markup (Word junk) and rich
+  // input — we just want a plain text field. Falls back gracefully on browsers
+  // that don't support plaintext-only (it'll behave like contenteditable=true).
+  el.setAttribute("contenteditable", "plaintext-only");
+  el.classList.add("press-editing");
+  el.dataset.pressOriginalText = originalText;
+
+  // Focus on next tick — lets the click event finish first so the cursor lands
+  // at the click position naturally.
+  setTimeout(() => {
+    el.focus();
+    // If browser didn't place cursor (rare), drop it at end of text
+    try {
+      const sel = $iframe.contentWindow.getSelection();
+      if (sel && sel.rangeCount === 0 && el.firstChild) {
+        const range = $iframe.contentDocument.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } catch (e) { /* selection not available — ignore */ }
+  }, 0);
+
+  const keydownListener = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      commitInlineEdit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      revertInlineEdit();
+    }
+  };
+  // Blur fires when the user clicks elsewhere; small delay so a sibling click
+  // event has a chance to commit cleanly without race conditions.
+  const blurListener = () => {
+    setTimeout(() => {
+      if (activelyEditing && activelyEditing.el === el) commitInlineEdit();
+    }, 50);
+  };
+  el.addEventListener("keydown", keydownListener);
+  el.addEventListener("blur", blurListener);
+
+  activelyEditing = { el, originalText, info, keydownListener, blurListener };
+}
+
+function commitInlineEdit() {
+  if (!activelyEditing) return;
+  const { el, originalText, info, keydownListener, blurListener } = activelyEditing;
+  const newValue = info.multiline ? el.textContent : el.textContent.trim();
+
+  // Tear down editor state regardless of whether the value changed
+  el.removeAttribute("contenteditable");
+  el.classList.remove("press-editing");
+  el.removeEventListener("keydown", keydownListener);
+  el.removeEventListener("blur", blurListener);
+  delete el.dataset.pressOriginalText;
+  activelyEditing = null;
+
+  // No-op if unchanged
+  if (newValue === originalText) return;
+
+  // Empty value would visually blank the element forever — refuse the edit
+  // and restore the original. A customer fat-fingering Backspace shouldn't
+  // be able to silently destroy their headline.
+  if (newValue.length === 0) {
+    el.textContent = originalText;
+    return;
+  }
+
+  const op = { op: "set", path: info.path, value: newValue };
+  pushDiffOps([op]);          // persist via localStorage so refresh restores
+  applyOpToCurrentSite(op);   // keep in-memory siteJson fresh for next AI prompt
+
+  history.unshift({
+    siteJson: structuredClone(currentSite),
+    narration: "Edited " + info.label,
+    timestamp: Date.now(),
+  });
+  renderHistory();
+  flashSaveStatus("Updated " + info.label);
+}
+
+function revertInlineEdit() {
+  if (!activelyEditing) return;
+  const { el, originalText, keydownListener, blurListener } = activelyEditing;
+  el.textContent = originalText;
+  el.removeAttribute("contenteditable");
+  el.classList.remove("press-editing");
+  el.removeEventListener("keydown", keydownListener);
+  el.removeEventListener("blur", blurListener);
+  delete el.dataset.pressOriginalText;
+  activelyEditing = null;
+}
+
+// Apply a diff op against the in-memory currentSite so subsequent AI prompts
+// get the freshest text. Mirrors the server's applier but kept in JS-land.
+function applyOpToCurrentSite(op) {
+  if (op.op !== "set") return;
+  setSitePath(currentSite, op.path, op.value);
+}
+
+function setSitePath(obj, path, value) {
+  const re = /([^.[\]]+)|\[(\d+)\]/g;
+  const tokens = [];
+  let m;
+  while ((m = re.exec(path)) !== null) {
+    if (m[1]) tokens.push({ key: m[1] });
+    else if (m[2] !== undefined) tokens.push({ idx: parseInt(m[2], 10) });
+  }
+  if (tokens.length === 0) return;
+  let cur = obj;
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const t = tokens[i];
+    cur = ("key" in t) ? cur[t.key] : cur[t.idx];
+    if (cur === undefined || cur === null) return;
+  }
+  const last = tokens[tokens.length - 1];
+  if ("key" in last) cur[last.key] = value;
+  else cur[last.idx] = value;
 }
 
 function clearSelection() {
