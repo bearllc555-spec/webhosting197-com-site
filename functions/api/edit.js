@@ -1,164 +1,61 @@
 /**
- * STEP 5: full edit endpoint with HEADER auth (not URL query string).
- * Theory: previous version's URL contained the API key, which appeared in
- * error stack traces, which Cloudflare's secret-detection blocked at the
- * response layer (returning generic 502 HTML). Header auth keeps the key
- * out of any string we might end up returning.
+ * STEP 6: POST + body to httpbin instead of Gemini.
+ * Determines if the bug is Gemini-specific or about POST-with-body in general.
  */
-
-const SYSTEM_PROMPT =
-  "You translate small business owners' natural-language change requests " +
-  "into a JSON diff against their site.json. Return ONLY a JSON object: " +
-  '{"narration": "<plain english, friendly tone, max 2 sentences>", ' +
-  '"diff": [{"op": "set|remove|insert|move", "path": "<dot.path>", "value": <any>}], ' +
-  '"confidence": 0.0, "warnings": []}. ' +
-  "For colors, use tasteful hex (green=#15803D, navy=#1E3A8A, terra=#C2410C). " +
-  "For section layout changes, paths look like sections[N].props.layout.";
 
 export async function onRequestGet({ request, env }) {
   return new Response(
-    JSON.stringify({
-      handler: "GET",
-      hasGeminiKey: !!env.GEMINI_API_KEY,
-      modelProvider: env.MODEL_PROVIDER || null,
-    }),
+    JSON.stringify({ handler: "GET", hasGeminiKey: !!env.GEMINI_API_KEY }),
     { status: 200, headers: { "content-type": "application/json" } }
   );
 }
 
 export async function onRequestPost({ request, env }) {
+  const log = [];
+  log.push("entered POST");
   try {
-    let body;
+    const body = await request.json().catch(() => ({}));
+    log.push("parsed body");
+
+    log.push("test 1: POST httpbin/post with body");
     try {
-      body = await request.json();
-    } catch {
-      return jsonResp(400, { error: "invalid JSON body" });
-    }
-    if (!body || !body.siteJson || typeof body.siteJson !== "object") {
-      return jsonResp(400, { error: "missing or invalid siteJson" });
-    }
-    if (typeof body.request !== "string" || body.request.trim().length === 0) {
-      return jsonResp(400, { error: "missing or empty request" });
-    }
-    if (body.request.length > 2000) {
-      return jsonResp(400, { error: "request too long" });
-    }
-    if (!env.GEMINI_API_KEY) {
-      return jsonResp(500, { error: "GEMINI_API_KEY not configured" });
-    }
-
-    const userPrompt =
-      "Current site.json: " +
-      JSON.stringify(body.siteJson) +
-      "\n\nRequest: " +
-      body.request.trim();
-
-    const reqBody = {
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
-        responseMimeType: "application/json",
-      },
-    };
-
-    // Header auth — keeps the API key out of the URL (which would otherwise
-    // appear in error stack traces and trip CF's secret-leak protection).
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-    let geminiResp;
-    try {
-      geminiResp = await fetch(url, {
+      const r = await fetch("https://httpbin.org/post", {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify(reqBody),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ hello: "world", request: body.request || "test" }),
       });
+      const t = await r.text();
+      log.push("httpbin POST status=" + r.status + " text len=" + t.length);
     } catch (err) {
-      return jsonResp(502, {
-        error: "gemini fetch failed",
-        message: err && err.message ? err.message : String(err),
-      });
+      log.push("httpbin POST threw: " + describe(err));
     }
 
-    const text = await geminiResp.text();
-    if (!geminiResp.ok) {
-      return jsonResp(502, {
-        error: "gemini http " + geminiResp.status,
-        body: text.slice(0, 500),
-      });
-    }
-
-    let topLevel;
+    log.push("test 2: POST gemini with header auth + minimal body");
     try {
-      topLevel = JSON.parse(text);
-    } catch {
-      return jsonResp(502, {
-        error: "gemini returned non-JSON",
-        body: text.slice(0, 500),
-      });
-    }
-
-    const modelText =
-      topLevel?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!modelText) {
-      return jsonResp(502, {
-        error: "gemini no model text",
-        topLevelKeys: Object.keys(topLevel),
-      });
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(modelText);
-    } catch {
-      return jsonResp(502, {
-        error: "model output not JSON",
-        modelText: modelText.slice(0, 400),
-      });
-    }
-
-    if (
-      typeof parsed.narration !== "string" ||
-      !Array.isArray(parsed.diff) ||
-      typeof parsed.confidence !== "number"
-    ) {
-      return jsonResp(502, {
-        error: "model output malformed shape",
-        received: parsed,
-      });
-    }
-    parsed.warnings = Array.isArray(parsed.warnings) ? parsed.warnings : [];
-
-    let proposedSite = body.siteJson;
-    let validated = true;
-    let validationError = null;
-    try {
-      proposedSite = applyDiff(body.siteJson, parsed.diff);
+      const r = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-goog-api-key": env.GEMINI_API_KEY || "",
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "Say green" }] }],
+          }),
+        }
+      );
+      const t = await r.text();
+      log.push("gemini POST status=" + r.status + " text len=" + t.length);
+      log.push("gemini text first 100: " + t.slice(0, 100));
     } catch (err) {
-      validated = false;
-      validationError = err && err.message ? err.message : String(err);
+      log.push("gemini POST threw: " + describe(err));
     }
 
-    return jsonResp(200, {
-      narration: parsed.narration,
-      diff: parsed.diff,
-      confidence: parsed.confidence,
-      warnings: parsed.warnings,
-      proposedSite,
-      validated,
-      validationError,
-      provider: "gemini",
-    });
+    return jsonResp(200, { log });
   } catch (err) {
-    return jsonResp(500, {
-      error: "uncaught",
-      message: err && err.message ? err.message : String(err),
-    });
+    log.push("UNCAUGHT: " + describe(err));
+    return jsonResp(500, { log });
   }
 }
 
@@ -177,91 +74,15 @@ function jsonResp(status, payload) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
-      "content-type": "application/json; charset=utf-8",
+      "content-type": "application/json",
       "access-control-allow-origin": "*",
     },
   });
 }
 
-function applyDiff(input, diff) {
-  const out = JSON.parse(JSON.stringify(input));
-  for (const op of diff) applyOp(out, op);
-  return out;
-}
-
-function applyOp(root, op) {
-  if (op.op === "set") return setAtPath(root, op.path, op.value);
-  if (op.op === "remove") return removeAtPath(root, op.path);
-  if (op.op === "insert") return insertAtPath(root, op.path, op.value, op.index);
-  if (op.op === "move") {
-    const tokens = tokenize(op.from);
-    const parent = walkToParent(root, tokens);
-    const last = tokens[tokens.length - 1];
-    let value;
-    if (last.kind === "key") {
-      value = parent[last.value];
-      delete parent[last.value];
-    } else {
-      if (!Array.isArray(parent)) throw new Error("move from non-array");
-      value = parent[last.value];
-      parent.splice(last.value, 1);
-    }
-    return setAtPath(root, op.to, value);
-  }
-  throw new Error("unknown op: " + op.op);
-}
-
-function tokenize(path) {
-  const tokens = [];
-  const re = /([^.[\]]+)|\[(\d+)\]/g;
-  let m;
-  while ((m = re.exec(path)) !== null) {
-    if (m[1] !== undefined) tokens.push({ kind: "key", value: m[1] });
-    else if (m[2] !== undefined) tokens.push({ kind: "index", value: parseInt(m[2], 10) });
-  }
-  return tokens;
-}
-
-function walkTo(root, tokens) {
-  let cur = root;
-  for (const t of tokens) {
-    if (t.kind === "key") {
-      if (cur === null || typeof cur !== "object") throw new Error("walk into non-object");
-      cur = cur[t.value];
-    } else {
-      if (!Array.isArray(cur)) throw new Error("index access on non-array");
-      cur = cur[t.value];
-    }
-  }
-  return cur;
-}
-
-function walkToParent(root, tokens) {
-  return walkTo(root, tokens.slice(0, -1));
-}
-
-function setAtPath(root, path, value) {
-  const tokens = tokenize(path);
-  if (tokens.length === 0) throw new Error("empty path");
-  const last = tokens[tokens.length - 1];
-  const parent = walkToParent(root, tokens);
-  if (last.kind === "key") parent[last.value] = value;
-  else parent[last.value] = value;
-}
-
-function removeAtPath(root, path) {
-  const tokens = tokenize(path);
-  if (tokens.length === 0) throw new Error("empty path");
-  const last = tokens[tokens.length - 1];
-  const parent = walkToParent(root, tokens);
-  if (last.kind === "key") delete parent[last.value];
-  else parent.splice(last.value, 1);
-}
-
-function insertAtPath(root, path, value, index) {
-  const tokens = tokenize(path);
-  const target = walkTo(root, tokens);
-  if (!Array.isArray(target)) throw new Error("insert into non-array");
-  if (index === undefined) target.push(value);
-  else target.splice(Math.max(0, Math.min(index, target.length)), 0, value);
+function describe(err) {
+  if (!err) return String(err);
+  if (typeof err === "string") return err;
+  if (err.message) return (err.name || "Error") + ": " + err.message;
+  try { return JSON.stringify(err); } catch { return String(err); }
 }
