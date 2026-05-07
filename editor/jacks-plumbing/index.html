@@ -1696,8 +1696,6 @@ function tagText(el, info) {
 function enterInlineEdit(el) {
   if (activelyEditing && activelyEditing.el === el) return;
   if (activelyEditing) commitInlineEdit();
-  // AI selection state has nothing to do with text edits — clear it for clarity
-  clearSelection();
 
   const info = {
     kind: el.getAttribute("data-press-text-edit"),
@@ -1707,6 +1705,36 @@ function enterInlineEdit(el) {
     isButton:  el.hasAttribute("data-press-text-edit-button"),
     isPhone:   el.hasAttribute("data-press-text-edit-phone"),
   };
+
+  // Update the chat pill so the customer sees exactly what's targeted, even
+  // when they're directly typing into the element. Both flows (direct edit
+  // and chat-driven edit) target the same element — the pill reflects that.
+  const doc = $iframe.contentDocument;
+  if (doc) {
+    doc.querySelectorAll(".press-selected, .press-parent-faded, .press-sub-selected")
+      .forEach((s) => s.classList.remove("press-selected", "press-parent-faded", "press-sub-selected"));
+  }
+  const parentSection = el.closest("[data-press-section]");
+  if (parentSection) {
+    parentSection.classList.add("press-parent-faded");
+    selectedTarget = {
+      type: parentSection.getAttribute("data-press-type"),
+      label: parentSection.getAttribute("data-press-label"),
+      index: parseInt(parentSection.getAttribute("data-press-section"), 10),
+    };
+    selectedSubTarget = {
+      kind: info.kind,
+      parentIndex: selectedTarget.index,
+      parentType: selectedTarget.type,
+      subIndex: 0,
+      label: info.label,
+    };
+  } else {
+    selectedTarget = null;
+    selectedSubTarget = { kind: info.kind, parentIndex: 0, parentType: null, subIndex: 0, label: info.label };
+  }
+  $targetLabel.textContent = info.label;
+  $targetPill.classList.add("show");
 
   // For buttons: stash any child SVG icon BEFORE the user starts editing, so
   // the cursor only sees plain text. Restored on commit/revert.
