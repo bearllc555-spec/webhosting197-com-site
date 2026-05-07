@@ -1406,14 +1406,19 @@ function setupSectionTargeting() {
     /* ---- Step 2: inline text editing ---- */
     "[data-press-text-edit] { cursor: text; }",
     "[data-press-text-edit]:hover { cursor: text; }",
+    /* press-editing matches press-sub-selected — same amber border + glow halo
+       so the customer sees one consistent "this is your focus" treatment, no
+       matter whether the click landed in a directly-editable text field or an
+       AI-targetable container. */
     "[data-press-text-edit].press-editing {",
-    "  outline: 2px solid rgba(16, 185, 129, 0.85) !important;",
-    "  outline-offset: 3px;",
+    "  outline: 2px solid rgba(245, 158, 11, 1.0) !important;",
+    "  outline-offset: -2px;",
     "  border-radius: 4px;",
     "  cursor: text;",
+    "  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 14px rgba(245, 158, 11, 0.30);",
     "}",
     "[data-press-text-edit][contenteditable]:focus {",
-    "  outline: 2px solid rgba(16, 185, 129, 0.85) !important;",
+    "  outline: 2px solid rgba(245, 158, 11, 1.0) !important;",
     "  caret-color: rgb(15, 23, 42);",
     "}",
     /* ---- Step 4 (A5): pulse highlight on AI-applied global changes ---- */
