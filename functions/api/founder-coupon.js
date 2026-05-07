@@ -156,5 +156,10 @@ function softFallback(reason, detail) {
     claimedCount: 0,
     maxFounders: MAX_FOUNDERS,
     reservedUntil: null,
+    // Diagnostic: surface failure reason to the splash JS console so we can
+    // tell `no-runtime-key` from `stripe-error` from the front-end without
+    // needing CF Pages logs. Truncated to 200 chars to be safe; key value is
+    // never included in `detail`. Remove once founder pricing is verified live.
+    _debug: { reason, detail: typeof detail === "string" ? detail.slice(0, 200) : null },
   });
 }
