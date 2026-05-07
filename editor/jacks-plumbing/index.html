@@ -1047,6 +1047,18 @@ function applyOpToIframe(doc, op) {
     return;
   }
 
+  // Business tagline → footer-tagline element (if present)
+  if (path === "business.tagline") {
+    doc.querySelectorAll(".footer-tagline").forEach((el) => { el.textContent = value; });
+    return;
+  }
+
+  // Business address → footer-address element (if present)
+  if (path === "business.contact.address") {
+    doc.querySelectorAll(".footer-address, .footer-link.footer-address").forEach((el) => { el.textContent = value; });
+    return;
+  }
+
   // Phone number → all phone buttons + footer tel: link
   if (path === "business.contact.phone") {
     const telHref = "tel:" + String(value).replace(/[^\d+]/g, "");
@@ -1166,7 +1178,9 @@ const SECTION_SELECTORS = [
   { selector: ".hero",         type: "hero",          label: "the headline area at the top" },
   { selector: ".services",     type: "services_grid", label: "the list of services" },
   { selector: ".testimonials", type: "testimonials",  label: "what customers are saying" },
-  { selector: ".cta-section",  type: "cta",           label: "the contact / call-now button" },
+  { selector: ".cta-section",  type: "cta",           label: "the call-out section near the bottom" },
+  { selector: ".site-header",  type: "header",        label: "the top navigation bar" },
+  { selector: ".site-footer",  type: "footer",        label: "the footer at the bottom" },
   { selector: ".gallery",      type: "gallery",       label: "the photo gallery" },
   { selector: ".form",         type: "form",          label: "the contact form" },
 ];
@@ -1188,6 +1202,14 @@ const SUB_SELECTORS_BY_PARENT = {
   cta: [
     { selector: "h2",            kind: "heading",      label: () => "the call-out heading" },
     { selector: ".btn",          kind: "cta_button",   label: (el) => 'the "' + (el.textContent || "").trim().slice(0, 40) + '" button' },
+  ],
+  header: [
+    { selector: ".brand-logo",   kind: "header_logo",  label: () => "the logo / business name" },
+    { selector: ".nav-link",     kind: "nav_link",     label: (el) => 'the "' + (el.textContent || "").trim().slice(0, 30) + '" nav link' },
+    { selector: ".nav-cta",      kind: "header_phone", label: () => "the phone button at the top" },
+  ],
+  footer: [
+    { selector: ".footer-link",  kind: "footer_link",  label: (el) => 'the footer link "' + (el.textContent || "").trim().slice(0, 40) + '"' },
   ],
   gallery: [],
   form: [],
@@ -1450,6 +1472,65 @@ function tagEditableTexts(doc) {
         { kind: "subheading", label: "the line under the call-out heading",
           path: "sections[" + sectionIdx + "].props.subheading", multiline: true });
     }
+
+    // Step 3: header + footer
+    if (type === "header") {
+      tagText(section.querySelector(".brand-logo"),
+        { kind: "business_name", label: "your business name",
+          path: "business.name", multiline: false });
+    }
+    if (type === "footer") {
+      tagText(section.querySelector(".footer-brand"),
+        { kind: "business_name", label: "your business name (in the footer)",
+          path: "business.name", multiline: false });
+      tagText(section.querySelector(".footer-tagline"),
+        { kind: "footer_tagline", label: "the footer tagline",
+          path: "business.tagline", multiline: true });
+      tagText(section.querySelector(".footer-address, .footer-link.footer-address"),
+        { kind: "footer_address", label: "the footer address",
+          path: "business.contact.address", multiline: true });
+      // Footer tel link — editing just changes the displayed phone, but the
+      // commit handler also writes business.contact.phone + the href below.
+      const telLink = section.querySelector(".footer-link[href^='tel:']");
+      if (telLink) {
+        tagText(telLink,
+          { kind: "footer_phone", label: "the phone number",
+            path: "business.contact.phone", multiline: false, isPhone: true });
+      }
+    }
+  });
+
+  // Step 3: button labels — hero CTA, cta-section CTA, header phone button.
+  // Buttons contain an SVG icon child that shouldn't be exposed to
+  // contenteditable; isButton triggers the SVG-stash dance in enterInlineEdit.
+  // The header's nav-cta is just the phone number (no "Call " prefix), so it
+  // maps directly to business.contact.phone instead of sections[N].cta_label.
+  doc.querySelectorAll("[data-press-section]").forEach((section) => {
+    const sectionIdx = parseInt(section.getAttribute("data-press-section"), 10);
+    const type = section.getAttribute("data-press-type");
+
+    if (type === "header") {
+      // Header phone button — text IS the phone number, write directly to
+      // business.contact.phone. isPhone triggers tel-href + cross-page sync.
+      Array.from(section.querySelectorAll(".nav-cta, .btn")).forEach((btn) => {
+        if (btn.hasAttribute("data-press-text-edit")) return;
+        tagText(btn,
+          { kind: "header_phone_button", label: "the phone number at the top",
+            path: "business.contact.phone",
+            multiline: false, isButton: true, isPhone: true });
+      });
+      return;
+    }
+
+    if (type === "hero" || type === "cta") {
+      Array.from(section.querySelectorAll(".btn, .hero-cta, .cta-btn")).forEach((btn) => {
+        if (btn.hasAttribute("data-press-text-edit")) return;
+        tagText(btn,
+          { kind: "button_label", label: "the button text",
+            path: "sections[" + sectionIdx + "].props.cta_label",
+            multiline: false, isButton: true });
+      });
+    }
   });
 }
 
@@ -1460,6 +1541,8 @@ function tagText(el, info) {
   el.setAttribute("data-press-text-edit-path", info.path);
   el.setAttribute("data-press-text-edit-label", info.label);
   if (info.multiline) el.setAttribute("data-press-text-edit-multiline", "true");
+  if (info.isButton)  el.setAttribute("data-press-text-edit-button",  "true");
+  if (info.isPhone)   el.setAttribute("data-press-text-edit-phone",   "true");
 }
 
 function enterInlineEdit(el) {
@@ -1473,7 +1556,20 @@ function enterInlineEdit(el) {
     path: el.getAttribute("data-press-text-edit-path"),
     label: el.getAttribute("data-press-text-edit-label"),
     multiline: el.hasAttribute("data-press-text-edit-multiline"),
+    isButton:  el.hasAttribute("data-press-text-edit-button"),
+    isPhone:   el.hasAttribute("data-press-text-edit-phone"),
   };
+
+  // For buttons: stash any child SVG icon BEFORE the user starts editing, so
+  // the cursor only sees plain text. Restored on commit/revert.
+  if (info.isButton) {
+    const svg = el.querySelector("svg");
+    if (svg) {
+      el._pressStashedSVG = svg;
+      svg.remove();
+    }
+  }
+
   const originalText = info.multiline ? el.textContent : el.textContent.trim();
 
   // contenteditable=plaintext-only blocks pasted markup (Word junk) and rich
@@ -1535,6 +1631,12 @@ function commitInlineEdit() {
   delete el.dataset.pressOriginalText;
   activelyEditing = null;
 
+  // Restore SVG icon for buttons (regardless of whether value changed)
+  if (info.isButton && el._pressStashedSVG) {
+    el.appendChild(el._pressStashedSVG);
+    delete el._pressStashedSVG;
+  }
+
   // No-op if unchanged
   if (newValue === originalText) return;
 
@@ -1543,12 +1645,46 @@ function commitInlineEdit() {
   // be able to silently destroy their headline.
   if (newValue.length === 0) {
     el.textContent = originalText;
+    if (info.isButton && el._pressStashedSVG) {
+      el.appendChild(el._pressStashedSVG);
+      delete el._pressStashedSVG;
+    }
     return;
   }
 
-  const op = { op: "set", path: info.path, value: newValue };
-  pushDiffOps([op]);          // persist via localStorage so refresh restores
-  applyOpToCurrentSite(op);   // keep in-memory siteJson fresh for next AI prompt
+  // Build the diff ops. Most edits emit a single op. Phone-bearing edits emit
+  // up to three so the visible text, the tel: href, and the global
+  // business.contact.phone all stay in sync.
+  const ops = [{ op: "set", path: info.path, value: newValue }];
+
+  // Phone magic: if this is a button label OR a footer phone link, see if the
+  // committed text contains a phone-number pattern. If so, also write
+  // business.contact.phone and (for buttons) the matching cta_href.
+  if (info.isButton || info.isPhone) {
+    const m = newValue.match(/\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/);
+    if (m) {
+      const phone = m[0];
+      // Update the global business phone (synced everywhere via replay logic)
+      if (info.path !== "business.contact.phone") {
+        ops.push({ op: "set", path: "business.contact.phone", value: phone });
+      }
+      // For button labels, also rewrite the matching cta_href so tap-to-call works
+      if (info.isButton && info.path.endsWith(".cta_label")) {
+        const hrefPath = info.path.replace(/\.cta_label$/, ".cta_href");
+        ops.push({ op: "set", path: hrefPath, value: "tel:" + phone.replace(/[^\d+]/g, "") });
+      }
+    }
+  }
+
+  pushDiffOps(ops);                               // persist via localStorage so refresh restores
+  ops.forEach((op) => applyOpToCurrentSite(op)); // keep in-memory siteJson fresh
+
+  // Cross-page visual sync: re-run the same replay logic that fires on iframe
+  // load, so any other DOM instances of the same schema field (e.g. footer
+  // brand syncing with header logo, all phone buttons updating together)
+  // refresh visually without waiting for a reload.
+  const doc = $iframe.contentDocument;
+  if (doc) ops.forEach((op) => { try { applyOpToIframe(doc, op); } catch (e) { console.warn("sync skip:", op, e); } });
 
   history.unshift({
     siteJson: structuredClone(currentSite),
@@ -1561,8 +1697,13 @@ function commitInlineEdit() {
 
 function revertInlineEdit() {
   if (!activelyEditing) return;
-  const { el, originalText, keydownListener, blurListener } = activelyEditing;
+  const { el, originalText, info, keydownListener, blurListener } = activelyEditing;
   el.textContent = originalText;
+  // Restore SVG icon for buttons (textContent= cleared all children including SVG)
+  if (info && info.isButton && el._pressStashedSVG) {
+    el.appendChild(el._pressStashedSVG);
+    delete el._pressStashedSVG;
+  }
   el.removeAttribute("contenteditable");
   el.classList.remove("press-editing");
   el.removeEventListener("keydown", keydownListener);
