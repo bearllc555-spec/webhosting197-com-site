@@ -373,10 +373,12 @@ async function sendRequest() {
     if (result.kind === "ok") {
       appendAssistantMessage(result.payload);
     } else if (result.kind === "rate_limited") {
-      // Rate-limit gets both Retry (likely to succeed after a wait) and Copy
+      // Rate-limit: 60s cooldown on the Retry button so the customer can't
+      // make a Cloudflare block worse by hammering. Copy is always available.
       appendErrorMessage("System busy. Try again in a few minutes.", {
-        onRetry: () => retryRequest(request, payload),
+        onRetry: (el) => retryRequest(request, payload, el),
         textToCopy: request,
+        cooldownSeconds: 60,
       });
     } else if (result.kind === "api_error") {
       // API errors usually indicate a structural problem; retry won't help, but
@@ -385,16 +387,16 @@ async function sendRequest() {
         textToCopy: request,
       });
     } else {
-      // Network errors: retry might help, copy always useful
+      // Network errors: retry might help, no cooldown needed
       appendErrorMessage(result.message || "Network error. Try again.", {
-        onRetry: () => retryRequest(request, payload),
+        onRetry: (el) => retryRequest(request, payload, el),
         textToCopy: request,
       });
     }
   } catch (err) {
     thinking.remove();
     appendErrorMessage(err.message || "Network error. Try again.", {
-      onRetry: () => retryRequest(request, payload),
+      onRetry: (el) => retryRequest(request, payload, el),
       textToCopy: request,
     });
   } finally {
@@ -404,35 +406,39 @@ async function sendRequest() {
 }
 
 // Re-fire a previously-failed request without making the customer re-type or
-// re-select. Used by the Retry button on chat error bubbles. Doesn't append a
-// new user message — the original is still in the chat history.
-async function retryRequest(originalText, payload) {
+// re-select. Used by the Retry button on chat error bubbles. The existing
+// error bubble (errorEl) is updated in place rather than spawning a new
+// stacked bubble — failed retries should not pile up.
+async function retryRequest(originalText, payload, errorEl) {
   $send.disabled = true;
   const thinking = appendThinkingMessage();
   try {
     const result = await postEditWithRetry(payload);
     thinking.remove();
     if (result.kind === "ok") {
+      // Success: drop the old error bubble entirely, show the assistant reply.
+      if (errorEl && errorEl.parentNode) errorEl.parentNode.removeChild(errorEl);
       appendAssistantMessage(result.payload);
     } else if (result.kind === "rate_limited") {
-      appendErrorMessage("Still busy. Try again in a few minutes.", {
-        onRetry: () => retryRequest(originalText, payload),
+      updateErrorBubble(errorEl, "Still busy. Try again in a few minutes.", {
+        onRetry: (el) => retryRequest(originalText, payload, el),
         textToCopy: originalText,
+        cooldownSeconds: 60,
       });
     } else if (result.kind === "api_error") {
-      appendErrorMessage(result.message || `request failed (${result.status})`, {
+      updateErrorBubble(errorEl, result.message || `request failed (${result.status})`, {
         textToCopy: originalText,
       });
     } else {
-      appendErrorMessage(result.message || "Network error. Try again.", {
-        onRetry: () => retryRequest(originalText, payload),
+      updateErrorBubble(errorEl, result.message || "Network error. Try again.", {
+        onRetry: (el) => retryRequest(originalText, payload, el),
         textToCopy: originalText,
       });
     }
   } catch (err) {
     thinking.remove();
-    appendErrorMessage(err.message || "Network error. Try again.", {
-      onRetry: () => retryRequest(originalText, payload),
+    updateErrorBubble(errorEl, err.message || "Network error. Try again.", {
+      onRetry: (el) => retryRequest(originalText, payload, el),
       textToCopy: originalText,
     });
   } finally {
@@ -440,45 +446,42 @@ async function retryRequest(originalText, payload) {
   }
 }
 
-// POST /api/edit with one auto-retry on transient 5xx. Distinguishes between:
+// POST /api/edit. Categorizes the response so the chat UI can render the right
+// kind of error bubble. Distinguishes between:
 //   - ok           : real JSON returned by our Function
 //   - rate_limited : HTML body (CF/upstream blocked us); show friendly toast
 //   - api_error    : JSON error from our Function (4xx with structured body)
 //   - network_error: fetch threw or response wasn't parseable as expected
+//
+// NOTE: this used to auto-retry once after 1.2s on rate_limited. Removed in
+// Step 1.6 — Cloudflare's edge rate-limit windows EXTEND when you keep
+// hitting them, so an internal auto-retry was making blocks worse rather than
+// recovering from them. Retries are now driven exclusively by the customer
+// clicking the Retry button (which has its own 60s cooldown to throttle abuse).
 async function postEditWithRetry(payload) {
-  const tryOnce = async () => {
-    let r;
-    try {
-      r = await fetch("/api/edit", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-    } catch (e) {
-      return { kind: "network_error", message: e && e.message ? e.message : "Network error" };
-    }
-    const text = await r.text();
-    // Detect HTML-error-page responses (Cloudflare 502/rate-limit/firewall)
-    const looksLikeHtml = text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<");
-    if (looksLikeHtml) {
-      return { kind: "rate_limited", status: r.status };
-    }
-    let j;
-    try { j = JSON.parse(text); }
-    catch { return { kind: "network_error", message: "Bad response from server" }; }
-    if (!r.ok) {
-      return { kind: "api_error", status: r.status, message: j.error || j.message || `request failed (${r.status})` };
-    }
-    return { kind: "ok", payload: j };
-  };
-  let result = await tryOnce();
-  // Single backoff retry on rate-limit only — don't retry api_error or network_error
-  // because those shouldn't change on retry and we don't want to amplify load.
-  if (result.kind === "rate_limited") {
-    await new Promise((res) => setTimeout(res, 1200));
-    result = await tryOnce();
+  let r;
+  try {
+    r = await fetch("/api/edit", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (e) {
+    return { kind: "network_error", message: e && e.message ? e.message : "Network error" };
   }
-  return result;
+  const text = await r.text();
+  // Detect HTML-error-page responses (Cloudflare 502/rate-limit/firewall)
+  const looksLikeHtml = text.startsWith("<!DOCTYPE") || text.startsWith("<html") || text.startsWith("<");
+  if (looksLikeHtml) {
+    return { kind: "rate_limited", status: r.status };
+  }
+  let j;
+  try { j = JSON.parse(text); }
+  catch { return { kind: "network_error", message: "Bad response from server" }; }
+  if (!r.ok) {
+    return { kind: "api_error", status: r.status, message: j.error || j.message || `request failed (${r.status})` };
+  }
+  return { kind: "ok", payload: j };
 }
 
 function appendUserMessage(text, target) {
@@ -514,74 +517,123 @@ const ICON_COPY  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
 
 // appendErrorMessage(text, actions?) — actions is optional and may include:
-//   - onRetry:    callback fired when the retry button is clicked
-//   - textToCopy: string to copy to clipboard when the copy button is clicked
-// If actions is omitted or empty, the error renders as a plain bubble (legacy behavior).
+//   - onRetry:           callback fired when the retry button is clicked.
+//                        Receives the bubble element so a retry can update
+//                        the SAME bubble in place rather than stacking a new one.
+//   - textToCopy:        string to copy to clipboard when the copy button is clicked
+//   - cooldownSeconds:   if > 0, disable the Retry button for N seconds with a
+//                        live countdown ("Retry in 47s") so we don't let the
+//                        customer hammer a rate-limited endpoint and make the
+//                        block window worse.
+// If actions is omitted or empty, the error renders as a plain bubble.
 function appendErrorMessage(msg, actions) {
   const el = document.createElement("div");
   el.className = "msg assistant";
 
   const wrap = document.createElement("div");
   wrap.className = "error-msg";
+  el.appendChild(wrap);
 
+  buildErrorContent(wrap, el, msg, actions);
+
+  $messages.appendChild(el);
+  $messages.scrollTop = $messages.scrollHeight;
+  return el;
+}
+
+// updateErrorBubble(el, text, actions?) — REPLACE the contents of an existing
+// error bubble in place rather than appending a new one. Used by retryRequest
+// when a retry fails again so we don't accumulate a column of duplicate errors.
+function updateErrorBubble(el, msg, actions) {
+  if (!el) return appendErrorMessage(msg, actions);
+  const wrap = el.querySelector(".error-msg");
+  if (!wrap) return appendErrorMessage(msg, actions);
+  wrap.innerHTML = "";
+  el.style.opacity = "1";
+  buildErrorContent(wrap, el, msg, actions);
+  $messages.scrollTop = $messages.scrollHeight;
+  return el;
+}
+
+// Internal: render the inner content of an error bubble into `wrap`.
+// Pulled out so appendErrorMessage and updateErrorBubble share rendering.
+function buildErrorContent(wrap, bubbleEl, msg, actions) {
   const text = document.createElement("div");
   text.className = "error-text";
   text.textContent = msg;
   wrap.appendChild(text);
 
-  if (actions && (actions.onRetry || actions.textToCopy)) {
-    const actionRow = document.createElement("div");
-    actionRow.className = "error-actions";
+  if (!actions || (!actions.onRetry && !actions.textToCopy)) return;
 
-    if (actions.onRetry) {
-      const retryBtn = document.createElement("button");
-      retryBtn.type = "button";
-      retryBtn.className = "error-action-btn";
-      retryBtn.title = "Retry the same request";
-      retryBtn.innerHTML = ICON_RETRY + "<span>Retry</span>";
-      retryBtn.addEventListener("click", () => {
-        retryBtn.disabled = true;
-        retryBtn.querySelector("span").textContent = "Retrying...";
-        // Fade the error bubble so the user sees "this is being acted on"
-        el.style.transition = "opacity 0.2s ease";
-        el.style.opacity = "0.5";
-        try { actions.onRetry(); }
-        catch (e) { console.warn("Retry callback threw:", e); }
-      });
-      actionRow.appendChild(retryBtn);
-    }
+  const actionRow = document.createElement("div");
+  actionRow.className = "error-actions";
 
-    if (actions.textToCopy) {
-      const copyBtn = document.createElement("button");
-      copyBtn.type = "button";
-      copyBtn.className = "error-action-btn";
-      copyBtn.title = "Copy your message to clipboard";
-      copyBtn.innerHTML = ICON_COPY + "<span>Copy your message</span>";
-      copyBtn.addEventListener("click", async () => {
-        const labelEl = copyBtn.querySelector("span");
-        try {
-          await navigator.clipboard.writeText(actions.textToCopy);
-          copyBtn.innerHTML = ICON_CHECK + "<span>Copied</span>";
-          setTimeout(() => {
-            // Restore original label after the brief confirmation
-            copyBtn.innerHTML = ICON_COPY + "<span>Copy your message</span>";
-          }, 1500);
-        } catch {
-          // Clipboard API can fail in some browsers/contexts (no user gesture, etc).
-          // Fall back to legacy execCommand path or just notify.
-          if (labelEl) labelEl.textContent = "Copy failed";
+  if (actions.onRetry) {
+    const retryBtn = document.createElement("button");
+    retryBtn.type = "button";
+    retryBtn.className = "error-action-btn";
+    retryBtn.dataset.action = "retry";
+    retryBtn.title = "Retry the same request";
+    retryBtn.innerHTML = ICON_RETRY + "<span>Retry</span>";
+
+    // Cooldown: disable + live-countdown for actions.cooldownSeconds.
+    // Prevents the customer from amplifying a CF rate-limit by clicking Retry
+    // every second.
+    const cooldown = Number(actions.cooldownSeconds) || 0;
+    let cooldownInterval = null;
+    if (cooldown > 0) {
+      let remaining = cooldown;
+      retryBtn.disabled = true;
+      retryBtn.querySelector("span").textContent = "Retry in " + remaining + "s";
+      cooldownInterval = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(cooldownInterval);
+          cooldownInterval = null;
+          retryBtn.disabled = false;
+          retryBtn.querySelector("span").textContent = "Retry";
+        } else {
+          retryBtn.querySelector("span").textContent = "Retry in " + remaining + "s";
         }
-      });
-      actionRow.appendChild(copyBtn);
+      }, 1000);
     }
 
-    wrap.appendChild(actionRow);
+    retryBtn.addEventListener("click", () => {
+      if (retryBtn.disabled) return;
+      if (cooldownInterval) { clearInterval(cooldownInterval); cooldownInterval = null; }
+      retryBtn.disabled = true;
+      retryBtn.querySelector("span").textContent = "Retrying...";
+      bubbleEl.style.transition = "opacity 0.2s ease";
+      bubbleEl.style.opacity = "0.5";
+      try { actions.onRetry(bubbleEl); }
+      catch (e) { console.warn("Retry callback threw:", e); }
+    });
+    actionRow.appendChild(retryBtn);
   }
 
-  el.appendChild(wrap);
-  $messages.appendChild(el);
-  $messages.scrollTop = $messages.scrollHeight;
-  return el;
+  if (actions.textToCopy) {
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "error-action-btn";
+    copyBtn.dataset.action = "copy";
+    copyBtn.title = "Copy your message to clipboard";
+    copyBtn.innerHTML = ICON_COPY + "<span>Copy your message</span>";
+    copyBtn.addEventListener("click", async () => {
+      const labelEl = copyBtn.querySelector("span");
+      try {
+        await navigator.clipboard.writeText(actions.textToCopy);
+        copyBtn.innerHTML = ICON_CHECK + "<span>Copied</span>";
+        setTimeout(() => {
+          copyBtn.innerHTML = ICON_COPY + "<span>Copy your message</span>";
+        }, 1500);
+      } catch {
+        if (labelEl) labelEl.textContent = "Copy failed";
+      }
+    });
+    actionRow.appendChild(copyBtn);
+  }
+
+  wrap.appendChild(actionRow);
 }
 
 function appendAssistantMessage(payload) {
