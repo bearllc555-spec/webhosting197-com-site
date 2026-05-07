@@ -93,6 +93,12 @@
   .warnings ul { margin: 0; padding-left: 1.1rem; }
 
   .error-msg { background: var(--red-soft); border: 1px solid var(--red); color: var(--red); padding: 0.6rem 0.85rem; border-radius: 10px; font-size: 0.85rem; line-height: 1.4; }
+  .error-msg .error-text { color: var(--red); }
+  .error-msg .error-actions { display: flex; gap: 0.4rem; margin-top: 0.55rem; flex-wrap: wrap; }
+  .error-msg .error-action-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.32rem 0.65rem; background: white; color: var(--ink-soft); border: 1px solid rgba(220, 38, 38, 0.35); border-radius: 6px; font-size: 0.78rem; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.12s, border-color 0.12s, color 0.12s; }
+  .error-msg .error-action-btn:hover { background: var(--bg); border-color: var(--red); color: var(--ink); }
+  .error-msg .error-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error-msg .error-action-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 
   .composer { border-top: 1px solid var(--rule); padding: 0.85rem 1rem; background: white; }
   .composer-input { width: 100%; border: 1px solid var(--rule-strong); border-radius: 10px; padding: 0.7rem 0.9rem; font-family: inherit; font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
@@ -367,18 +373,70 @@ async function sendRequest() {
     if (result.kind === "ok") {
       appendAssistantMessage(result.payload);
     } else if (result.kind === "rate_limited") {
-      appendErrorMessage("Hmm — Press is taking a breather. Wait a few seconds and try again.");
+      // Rate-limit gets both Retry (likely to succeed after a wait) and Copy
+      appendErrorMessage("Hmm — Press is taking a breather. Wait a few seconds and try again.", {
+        onRetry: () => retryRequest(request, payload),
+        textToCopy: request,
+      });
     } else if (result.kind === "api_error") {
-      appendErrorMessage(result.message || `request failed (${result.status})`);
+      // API errors usually indicate a structural problem; retry won't help, but
+      // copying the prompt lets the customer tweak and re-send without retyping.
+      appendErrorMessage(result.message || `request failed (${result.status})`, {
+        textToCopy: request,
+      });
     } else {
-      appendErrorMessage(result.message || "Network error. Try again.");
+      // Network errors: retry might help, copy always useful
+      appendErrorMessage(result.message || "Network error. Try again.", {
+        onRetry: () => retryRequest(request, payload),
+        textToCopy: request,
+      });
     }
   } catch (err) {
     thinking.remove();
-    appendErrorMessage(err.message || "Network error. Try again.");
+    appendErrorMessage(err.message || "Network error. Try again.", {
+      onRetry: () => retryRequest(request, payload),
+      textToCopy: request,
+    });
   } finally {
     $send.disabled = false;
     $input.focus();
+  }
+}
+
+// Re-fire a previously-failed request without making the customer re-type or
+// re-select. Used by the Retry button on chat error bubbles. Doesn't append a
+// new user message — the original is still in the chat history.
+async function retryRequest(originalText, payload) {
+  $send.disabled = true;
+  const thinking = appendThinkingMessage();
+  try {
+    const result = await postEditWithRetry(payload);
+    thinking.remove();
+    if (result.kind === "ok") {
+      appendAssistantMessage(result.payload);
+    } else if (result.kind === "rate_limited") {
+      appendErrorMessage("Still busy — wait a few more seconds and try again.", {
+        onRetry: () => retryRequest(originalText, payload),
+        textToCopy: originalText,
+      });
+    } else if (result.kind === "api_error") {
+      appendErrorMessage(result.message || `request failed (${result.status})`, {
+        textToCopy: originalText,
+      });
+    } else {
+      appendErrorMessage(result.message || "Network error. Try again.", {
+        onRetry: () => retryRequest(originalText, payload),
+        textToCopy: originalText,
+      });
+    }
+  } catch (err) {
+    thinking.remove();
+    appendErrorMessage(err.message || "Network error. Try again.", {
+      onRetry: () => retryRequest(originalText, payload),
+      textToCopy: originalText,
+    });
+  } finally {
+    $send.disabled = false;
   }
 }
 
@@ -450,12 +508,80 @@ function appendThinkingMessage() {
   return el;
 }
 
-function appendErrorMessage(msg) {
+// Inline SVG icons for the error action buttons
+const ICON_RETRY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>';
+const ICON_COPY  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+
+// appendErrorMessage(text, actions?) — actions is optional and may include:
+//   - onRetry:    callback fired when the retry button is clicked
+//   - textToCopy: string to copy to clipboard when the copy button is clicked
+// If actions is omitted or empty, the error renders as a plain bubble (legacy behavior).
+function appendErrorMessage(msg, actions) {
   const el = document.createElement("div");
   el.className = "msg assistant";
-  el.innerHTML = `<div class="error-msg">${escapeHtml(msg)}</div>`;
+
+  const wrap = document.createElement("div");
+  wrap.className = "error-msg";
+
+  const text = document.createElement("div");
+  text.className = "error-text";
+  text.textContent = msg;
+  wrap.appendChild(text);
+
+  if (actions && (actions.onRetry || actions.textToCopy)) {
+    const actionRow = document.createElement("div");
+    actionRow.className = "error-actions";
+
+    if (actions.onRetry) {
+      const retryBtn = document.createElement("button");
+      retryBtn.type = "button";
+      retryBtn.className = "error-action-btn";
+      retryBtn.title = "Retry the same request";
+      retryBtn.innerHTML = ICON_RETRY + "<span>Retry</span>";
+      retryBtn.addEventListener("click", () => {
+        retryBtn.disabled = true;
+        retryBtn.querySelector("span").textContent = "Retrying...";
+        // Fade the error bubble so the user sees "this is being acted on"
+        el.style.transition = "opacity 0.2s ease";
+        el.style.opacity = "0.5";
+        try { actions.onRetry(); }
+        catch (e) { console.warn("Retry callback threw:", e); }
+      });
+      actionRow.appendChild(retryBtn);
+    }
+
+    if (actions.textToCopy) {
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "error-action-btn";
+      copyBtn.title = "Copy your message to clipboard";
+      copyBtn.innerHTML = ICON_COPY + "<span>Copy your message</span>";
+      copyBtn.addEventListener("click", async () => {
+        const labelEl = copyBtn.querySelector("span");
+        try {
+          await navigator.clipboard.writeText(actions.textToCopy);
+          copyBtn.innerHTML = ICON_CHECK + "<span>Copied</span>";
+          setTimeout(() => {
+            // Restore original label after the brief confirmation
+            copyBtn.innerHTML = ICON_COPY + "<span>Copy your message</span>";
+          }, 1500);
+        } catch {
+          // Clipboard API can fail in some browsers/contexts (no user gesture, etc).
+          // Fall back to legacy execCommand path or just notify.
+          if (labelEl) labelEl.textContent = "Copy failed";
+        }
+      });
+      actionRow.appendChild(copyBtn);
+    }
+
+    wrap.appendChild(actionRow);
+  }
+
+  el.appendChild(wrap);
   $messages.appendChild(el);
   $messages.scrollTop = $messages.scrollHeight;
+  return el;
 }
 
 function appendAssistantMessage(payload) {
