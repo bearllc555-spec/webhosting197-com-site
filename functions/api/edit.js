@@ -62,11 +62,36 @@ async function handle({ request, env }) {
     return jsonResp(500, { error: "GEMINI_API_KEY not configured" });
   }
 
+  // If the customer pointed at a specific section in the preview, surface
+  // that targeting hint to the model so it scopes the diff narrowly.
+  let targetingHint = "";
+  if (
+    typeof body.targetType === "string" &&
+    typeof body.targetIndex === "number" &&
+    body.targetType.length > 0
+  ) {
+    const safeLabel =
+      typeof body.targetLabel === "string" && body.targetLabel.length < 100
+        ? body.targetLabel
+        : body.targetType;
+    targetingHint =
+      "\n\nIMPORTANT TARGETING HINT: The customer clicked on a specific section " +
+      "in the preview before sending this request. They are pointing at: " +
+      JSON.stringify(safeLabel) +
+      " which corresponds to sections[" + body.targetIndex + "] of type " +
+      JSON.stringify(body.targetType) +
+      ". Scope your diff to that section only — do not change unrelated sections, " +
+      "global brand colors, or the whole site, unless the customer explicitly says so. " +
+      "If their request makes more sense applied site-wide (e.g., changing brand color), " +
+      "still acknowledge the targeted section in your narration.";
+  }
+
   const userPrompt =
     "Current site.json:\n```json\n" +
     JSON.stringify(body.siteJson, null, 2) +
     "\n```\n\nCustomer's request: " +
     body.request.trim() +
+    targetingHint +
     "\n\nRespond with the JSON object only.";
 
   let geminiText;
