@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Press · Jack's Plumbing</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #FBFBFC;
+    --ink: #0F172A;
+    --ink-soft: #1E293B;
+    --slate: #64748B;
+    --slate-light: #94A3B8;
+    --rule: #E5E7EB;
+    --rule-strong: #D1D5DB;
+    --primary: #2563EB;
+    --primary-soft: rgba(37, 99, 235, 0.08);
+    --primary-deep: #1D4ED8;
+    --green: #10B981;
+    --green-soft: rgba(16, 185, 129, 0.1);
+    --red: #DC2626;
+    --red-soft: rgba(220, 38, 38, 0.08);
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .app { display: grid; grid-template-rows: 56px 1fr; height: 100vh; }
+
+  /* ---- topbar ---- */
+  .topbar { display: flex; align-items: center; padding: 0 1.25rem; background: white; border-bottom: 1px solid var(--rule); gap: 1rem; }
+  .brand { font-weight: 700; font-size: 0.9375rem; letter-spacing: -0.015em; }
+  .brand .slash { color: var(--slate); font-weight: 500; }
+  .topbar-divider { width: 1px; height: 22px; background: var(--rule); }
+  .topbar-site { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--ink-soft); }
+  .topbar-site .domain { color: var(--slate); font-weight: 500; }
+  .save-status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8125rem; color: var(--slate); margin-left: auto; margin-right: 0.5rem; }
+  .save-status .dot { width: 7px; height: 7px; background: var(--green); border-radius: 999px; box-shadow: 0 0 0 3px var(--green-soft); }
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; font-size: 0.875rem; font-weight: 600; border-radius: 8px; border: 1px solid transparent; text-decoration: none; cursor: pointer; font-family: inherit; transition: transform 0.12s, box-shadow 0.12s, background 0.15s; }
+  .btn-ghost { background: white; color: var(--ink); border-color: var(--rule-strong); }
+  .btn-ghost:hover { border-color: var(--slate); }
+  .btn-primary { background: var(--primary); color: white; box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(37,99,235,0.18); }
+  .btn-primary:hover { background: var(--primary-deep); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ---- main split ---- */
+  .main { display: grid; grid-template-columns: 380px 1fr; height: 100%; overflow: hidden; }
+
+  /* ---- chat side ---- */
+  .chat { display: flex; flex-direction: column; background: white; border-right: 1px solid var(--rule); }
+  .chat-head { padding: 1.25rem; border-bottom: 1px solid var(--rule); }
+  .chat-head h2 { margin: 0 0 0.25rem 0; font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.015em; }
+  .chat-head p { margin: 0; font-size: 0.8125rem; color: var(--slate); line-height: 1.5; }
+  .messages { flex: 1; overflow-y: auto; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
+  .messages:empty::before { content: "Try: \"make the hero green\" · \"4-column services\" · \"add a winter promo banner\""; display: block; padding: 1rem; font-size: 0.8125rem; color: var(--slate-light); font-style: italic; line-height: 1.5; text-align: center; }
+
+  .msg { max-width: 92%; font-size: 0.9rem; line-height: 1.5; }
+  .msg.user { align-self: flex-end; background: var(--primary); color: white; padding: 0.6rem 0.9rem; border-radius: 12px 12px 2px 12px; }
+  .msg.assistant { align-self: flex-start; }
+  .msg.assistant .text { background: var(--bg); padding: 0.7rem 0.9rem; border-radius: 12px 12px 12px 2px; border: 1px solid var(--rule); }
+  .msg.assistant .diff { margin-top: 0.5rem; background: white; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; font-size: 0.75rem; }
+  .diff-row { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .diff-row:last-child { border-bottom: 0; }
+  .diff-op { display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.4rem; border-radius: 4px; flex-shrink: 0; }
+  .diff-op.set { background: var(--amber-soft); color: #92400E; }
+  .diff-op.insert { background: var(--green-soft); color: #065F46; }
+  .diff-op.remove { background: var(--red-soft); color: #991B1B; }
+  .diff-op.move { background: var(--primary-soft); color: var(--primary); }
+  .diff-path { color: var(--slate); flex-shrink: 0; }
+  .diff-value { color: var(--ink); margin-left: auto; font-weight: 600; word-break: break-word; max-width: 60%; text-align: right; }
+  .diff-color { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--rule-strong); vertical-align: -2px; margin-right: 0.25rem; }
+
+  .msg-meta { font-size: 0.75rem; color: var(--slate); margin-top: 0.4rem; display: flex; gap: 0.6rem; align-items: center; }
+  .confidence-bar { width: 56px; height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+  .confidence-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s ease; }
+  .confidence-fill.low { background: var(--red); }
+  .confidence-fill.med { background: #F59E0B; }
+
+  .msg-actions { margin-top: 0.5rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .msg-actions .btn { padding: 0.4rem 0.75rem; font-size: 0.8125rem; }
+
+  .warnings { margin-top: 0.4rem; font-size: 0.78rem; color: #92400E; background: var(--amber-soft); padding: 0.5rem 0.7rem; border-radius: 8px; line-height: 1.45; }
+  .warnings ul { margin: 0; padding-left: 1.1rem; }
+
+  .error-msg { background: var(--red-soft); border: 1px solid var(--red); color: var(--red); padding: 0.6rem 0.85rem; border-radius: 10px; font-size: 0.85rem; line-height: 1.4; }
+
+  .composer { border-top: 1px solid var(--rule); padding: 0.85rem 1rem; background: white; }
+  .composer-input { width: 100%; border: 1px solid var(--rule-strong); border-radius: 10px; padding: 0.7rem 0.9rem; font-family: inherit; font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+  .composer-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  .composer-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; font-size: 0.72rem; color: var(--slate); }
+  .composer-send { padding: 0.45rem 0.95rem; font-size: 0.8125rem; }
+
+  .thinking { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--slate); font-size: 0.85rem; font-style: italic; }
+  .thinking .dot { width: 6px; height: 6px; background: var(--slate); border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+  .thinking .dot:nth-child(2) { animation-delay: 0.2s; }
+  .thinking .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+  /* ---- preview side ---- */
+  .preview { display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+  .preview-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: white; border-bottom: 1px solid var(--rule); }
+  .preview-tabs { display: flex; gap: 0.25rem; }
+  .preview-tab { padding: 0.45rem 0.8rem; font-size: 0.8125rem; font-weight: 500; border: 1px solid var(--rule); background: white; border-radius: 8px; color: var(--ink-soft); cursor: pointer; font-family: inherit; }
+  .preview-tab.active { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+  .preview-url { flex: 1; margin: 0 0.75rem; background: var(--bg); padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.8125rem; color: var(--slate); font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+  .device-toggle { display: flex; gap: 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .device-toggle button { padding: 0.4rem 0.6rem; background: white; border: 0; cursor: pointer; color: var(--slate); border-right: 1px solid var(--rule); }
+  .device-toggle button:last-child { border-right: 0; }
+  .device-toggle button.active { background: var(--primary-soft); color: var(--primary); }
+
+  .preview-frame-wrap { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 1.5rem; overflow: auto; }
+  .preview-frame { width: 100%; max-width: 1100px; height: 100%; background: white; border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 24px 48px rgba(15,23,42,0.06); overflow: hidden; position: relative; transition: max-width 0.3s ease; }
+  .preview-frame.mobile { max-width: 380px; }
+  .preview-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .preview-overlay { position: absolute; top: 0; left: 0; right: 0; height: 38px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); display: flex; align-items: center; padding: 0 0.85rem; gap: 0.4rem; z-index: 1; pointer-events: none; }
+  .preview-dot { width: 11px; height: 11px; border-radius: 999px; }
+  .preview-dot.r { background: #FF5F57; } .preview-dot.y { background: #FEBC2E; } .preview-dot.g { background: #28C840; }
+  .preview-overlay-url { margin-left: 0.85rem; font-size: 0.75rem; color: var(--slate); font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+
+  /* ---- history side panel ---- */
+  .history-tab { display: none; }
+  .history-tab.active { display: flex; flex-direction: column; flex: 1; padding: 1.5rem; overflow-y: auto; gap: 1rem; }
+  .history-row { display: flex; align-items: flex-start; gap: 0.85rem; padding: 0.85rem 1rem; background: white; border: 1px solid var(--rule); border-radius: 10px; }
+  .history-dot { flex-shrink: 0; width: 10px; height: 10px; background: var(--slate-light); border-radius: 50%; margin-top: 0.5rem; }
+  .history-row.current .history-dot { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+  .history-row.launch .history-dot { background: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  .history-meta { flex: 1; min-width: 0; }
+  .history-narration { font-size: 0.9rem; color: var(--ink); font-weight: 500; line-height: 1.4; }
+  .history-time { font-size: 0.75rem; color: var(--slate); margin-top: 0.2rem; }
+  .history-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+  .history-row.current .history-actions { visibility: hidden; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- topbar -->
+  <div class="topbar">
+    <span class="brand"><span class="slash">/</span>press</span>
+    <span class="topbar-divider"></span>
+    <span class="topbar-site">
+      <strong>Jack's Plumbing</strong>
+      <span class="domain">jacksplumbing.com</span>
+    </span>
+    <span class="save-status" id="saveStatus">
+      <span class="dot"></span>
+      <span id="saveStatusText">All changes saved</span>
+    </span>
+    <button class="btn btn-ghost" id="downloadBtn" title="Download a snapshot of your site.json">Download backup</button>
+    <button class="btn btn-primary" id="publishBtn">Publish · live in 30s</button>
+  </div>
+
+  <!-- main -->
+  <div class="main">
+    <!-- chat side -->
+    <div class="chat">
+      <div class="chat-head">
+        <h2>Tell us what to change</h2>
+        <p>Describe the change in plain English. We'll show you exactly what will change before anything ships.</p>
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+      <div class="composer">
+        <textarea
+          class="composer-input"
+          id="composerInput"
+          rows="2"
+          placeholder='Try: "make the hero green" or "add a winter promo banner"'></textarea>
+        <div class="composer-foot">
+          <span>⏎ to send · Shift+⏎ for new line</span>
+          <button class="btn btn-primary composer-send" id="composerSend">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- preview side -->
+    <div class="preview">
+      <div class="preview-head">
+        <div class="preview-tabs">
+          <button class="preview-tab active" data-tab="preview">Live preview</button>
+          <button class="preview-tab" data-tab="history">Version history</button>
+        </div>
+        <span class="preview-url">jacksplumbing.com</span>
+        <div class="device-toggle">
+          <button class="active" data-device="desktop" title="Desktop">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+          <button data-device="mobile" title="Mobile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- preview tab -->
+      <div class="preview-frame-wrap" id="previewTab">
+        <div class="preview-frame" id="previewFrame">
+          <div class="preview-overlay">
+            <span class="preview-dot r"></span>
+            <span class="preview-dot y"></span>
+            <span class="preview-dot g"></span>
+            <span class="preview-overlay-url">jacksplumbing.com</span>
+          </div>
+          <iframe id="previewIframe" src="../../preview/jacks-plumbing/index.html" title="Live preview"></iframe>
+        </div>
+      </div>
+
+      <!-- history tab -->
+      <div class="history-tab" id="historyTab"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+ * Press editor — client-side controller
+ *
+ * State:
+ *   currentSite — the customer's site.json as it is right now
+ *   history     — array of { siteJson, narration, timestamp, isLaunch? }
+ *
+ * Flow:
+ *   User types request → POST /api/edit with {siteJson, request}
+ *     → response shows narration + diff + Apply/Undo buttons
+ *   User clicks Apply → currentSite = response.proposedSite
+ *     → push entry into history
+ *     → patch the iframe preview live (where possible)
+ *   User clicks Restore on a history row → currentSite = that entry
+ *     → re-render preview
+ * ============================================================ */
+
+// Bootstrap with Jack's Plumbing fixture (in real product this is loaded from
+// the customer's per-customer git repo — for V1 demo it's hard-coded).
+const INITIAL_SITE = {
+  meta: {
+    customer_slug: "jacks-plumbing",
+    template: "modern-clean",
+    hero_variant: "cta",
+    schema_version: 1,
+    created_at: "2026-05-07T14:00:00.000Z",
+    updated_at: "2026-05-07T14:00:00.000Z"
+  },
+  business: {
+    name: "Jack's Plumbing",
+    tagline: "Your local plumber, on call when you need us.",
+    industry: "Plumbing",
+    year_established: 2008,
+    contact: {
+      phone: "(973) 555-0100",
+      email: "hello@jacksplumbing.com",
+      address: { street: "12 Main St", city: "Clifton", state: "NJ", zip: "07013" },
+      hours: { monday: "8a-6p", tuesday: "8a-6p", wednesday: "8a-6p", thursday: "8a-6p", friday: "8a-6p", saturday: "9a-2p", notes: "24/7 emergency calls" },
+      social: { facebook: "https://facebook.com/jacksplumbing", google_business: "https://g.page/jacksplumbing" }
+    },
+    service_area: ["Clifton, NJ", "Passaic, NJ", "Little Falls, NJ", "Wayne, NJ", "Paterson, NJ"]
+  },
+  brand: {
+    logo_url: "https://placehold.co/300x100/0F172A/FFFFFF/png?text=Jack%27s+Plumbing",
+    colors: { primary: "#0F172A", accent: "#F59E0B", neutral_dark: "#1E293B", neutral_light: "#F8FAFC" },
+    voice: "friendly"
+  },
+  services: [
+    { name: "Emergency Repair", description: "24/7 burst pipes, leaks, and clogs handled fast — most calls resolved within 90 minutes." },
+    { name: "Water Heater", description: "Repair and replacement for tank and tankless water heaters. Same-day service when stocked." },
+    { name: "Drain Cleaning", description: "Hydro-jetting and snaking for kitchen, bathroom, and main-line clogs." },
+    { name: "Fixture Install", description: "Faucets, toilets, garbage disposals, and full bathroom remodels." }
+  ],
+  sections: [
+    { type: "hero", props: { headline: "Plumbing problems? We're 30 minutes away.", subheadline: "Family-owned and serving Clifton, Passaic, and surrounding NJ towns since 2008.", cta_label: "Call (973) 555-0100", cta_href: "tel:+19735550100" } },
+    { type: "services_grid", props: { heading: "What we do", service_indices: [0, 1, 2, 3], layout: "grid-2" } },
+    { type: "testimonials", props: { heading: "What our neighbors say", testimonials: [ { quote: "Jack came out at 11pm on a Sunday for a burst pipe. Saved my floors. Fair price, no upcharge.", author: "Maria L.", role: "Clifton, NJ" }, { quote: "Honest, on time, and explained everything. We use him for the whole rental portfolio now.", author: "Dave R.", role: "Passaic, NJ" } ] } },
+    { type: "cta", props: { heading: "Got a plumbing problem? Don't wait.", subheading: "Most repairs handled the same day.", cta_label: "Call (973) 555-0100", cta_href: "tel:+19735550100" } }
+  ],
+  pages: { home: { sections: [0, 1, 2, 3] } }
+};
+
+let currentSite = structuredClone(INITIAL_SITE);
+let history = [
+  { siteJson: structuredClone(INITIAL_SITE), narration: "★ Initial site (from onboarding)", timestamp: Date.now() - 1000 * 60 * 60 * 24, isLaunch: true }
+];
+
+const $messages = document.getElementById("messages");
+const $input = document.getElementById("composerInput");
+const $send = document.getElementById("composerSend");
+const $iframe = document.getElementById("previewIframe");
+const $previewFrame = document.getElementById("previewFrame");
+const $previewTab = document.getElementById("previewTab");
+const $historyTab = document.getElementById("historyTab");
+const $publishBtn = document.getElementById("publishBtn");
+const $downloadBtn = document.getElementById("downloadBtn");
+const $saveStatusText = document.getElementById("saveStatusText");
+
+/* ---------- chat ---------- */
+
+async function sendRequest() {
+  const request = $input.value.trim();
+  if (!request) return;
+  $input.value = "";
+  $send.disabled = true;
+  appendUserMessage(request);
+  const thinking = appendThinkingMessage();
+
+  try {
+    const r = await fetch("/api/edit", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ siteJson: currentSite, request })
+    });
+    const j = await r.json();
+    thinking.remove();
+    if (!r.ok) {
+      appendErrorMessage(j.error || `request failed (${r.status})`);
+      return;
+    }
+    appendAssistantMessage(j);
+  } catch (err) {
+    thinking.remove();
+    appendErrorMessage(err.message || "Network error. Try again.");
+  } finally {
+    $send.disabled = false;
+    $input.focus();
+  }
+}
+
+function appendUserMessage(text) {
+  const el = document.createElement("div");
+  el.className = "msg user";
+  el.textContent = text;
+  $messages.appendChild(el);
+  $messages.scrollTop = $messages.scrollHeight;
+}
+
+function appendThinkingMessage() {
+  const el = document.createElement("div");
+  el.className = "msg assistant";
+  el.innerHTML = `<div class="text"><span class="thinking">Thinking<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span></div>`;
+  $messages.appendChild(el);
+  $messages.scrollTop = $messages.scrollHeight;
+  return el;
+}
+
+function appendErrorMessage(msg) {
+  const el = document.createElement("div");
+  el.className = "msg assistant";
+  el.innerHTML = `<div class="error-msg">${escapeHtml(msg)}</div>`;
+  $messages.appendChild(el);
+  $messages.scrollTop = $messages.scrollHeight;
+}
+
+function appendAssistantMessage(payload) {
+  const { narration, diff, confidence, warnings, proposedSite, validated, validationError } = payload;
+
+  const el = document.createElement("div");
+  el.className = "msg assistant";
+
+  let html = `<div class="text">${escapeHtml(narration)}</div>`;
+  if (diff && diff.length > 0) {
+    html += `<div class="diff">${diff.map(renderDiffRow).join("")}</div>`;
+  }
+
+  // confidence + provider meta
+  const confClass = confidence >= 0.8 ? "" : confidence >= 0.6 ? "med" : "low";
+  html += `
+    <div class="msg-meta">
+      <span class="confidence-bar"><span class="confidence-fill ${confClass}" style="width:${Math.round((confidence || 0) * 100)}%"></span></span>
+      <span>${Math.round((confidence || 0) * 100)}% confident · ${escapeHtml(payload.provider || "ai")}</span>
+    </div>`;
+
+  // warnings
+  if (warnings && warnings.length > 0) {
+    html += `<div class="warnings"><ul>${warnings.map(w => `<li>${escapeHtml(w)}</li>`).join("")}</ul></div>`;
+  }
+
+  // validation error (if any)
+  if (validated === false && validationError) {
+    html += `<div class="warnings">Heads up: ${escapeHtml(validationError)}. Apply may produce unexpected results.</div>`;
+  }
+
+  // actions
+  if (diff && diff.length > 0) {
+    html += `
+      <div class="msg-actions">
+        <button class="btn btn-primary apply-btn">Apply</button>
+        <button class="btn btn-ghost discard-btn">Discard</button>
+      </div>`;
+  }
+
+  el.innerHTML = html;
+
+  const applyBtn = el.querySelector(".apply-btn");
+  if (applyBtn) {
+    applyBtn.addEventListener("click", () => applyDiff(narration, proposedSite, applyBtn));
+  }
+  const discardBtn = el.querySelector(".discard-btn");
+  if (discardBtn) {
+    discardBtn.addEventListener("click", () => {
+      el.querySelector(".msg-actions").innerHTML = '<span style="font-size:0.8rem; color:var(--slate)">Discarded.</span>';
+    });
+  }
+
+  $messages.appendChild(el);
+  $messages.scrollTop = $messages.scrollHeight;
+}
+
+function renderDiffRow(op) {
+  const opClass = op.op;
+  let pathLabel, valueLabel = "";
+  switch (op.op) {
+    case "set":
+      pathLabel = `${op.path}`;
+      valueLabel = formatValue(op.value, op.path);
+      break;
+    case "insert":
+      pathLabel = `${op.path}${op.index !== undefined ? ` @ ${op.index}` : ""}`;
+      valueLabel = formatValue(op.value, op.path);
+      break;
+    case "remove":
+      pathLabel = op.path;
+      break;
+    case "move":
+      pathLabel = `${op.from} → ${op.to}`;
+      break;
+    default:
+      pathLabel = JSON.stringify(op);
+  }
+  return `<div class="diff-row">
+    <span class="diff-op ${opClass}">${op.op}</span>
+    <span class="diff-path">${escapeHtml(pathLabel)}</span>
+    ${valueLabel ? `<span class="diff-value">${valueLabel}</span>` : ""}
+  </div>`;
+}
+
+function formatValue(value, path) {
+  if (typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value)) {
+    return `<span class="diff-color" style="background:${value}"></span>${value}`;
+  }
+  if (typeof value === "string") {
+    return escapeHtml(value.length > 60 ? value.slice(0, 57) + "..." : value);
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (value && typeof value === "object" && value.type) {
+    return `${value.type}`;
+  }
+  if (Array.isArray(value)) {
+    return `[${value.length} items]`;
+  }
+  return "{...}";
+}
+
+/* ---------- apply diff ---------- */
+
+function applyDiff(narration, proposedSite, btn) {
+  // Replace the message's action buttons with a "applied" indicator
+  const actions = btn.parentElement;
+  actions.innerHTML = `<span style="font-size:0.8rem; color:var(--green)">✓ Applied</span>`;
+
+  // Push to history
+  history.unshift({
+    siteJson: structuredClone(proposedSite),
+    narration,
+    timestamp: Date.now()
+  });
+  currentSite = structuredClone(proposedSite);
+
+  // Apply visual changes to iframe in-place where possible
+  patchIframePreview(currentSite);
+
+  // Refresh history pane
+  renderHistory();
+
+  flashSaveStatus(`Applied · ${narration.slice(0, 40)}${narration.length > 40 ? "..." : ""}`);
+}
+
+function patchIframePreview(site) {
+  // For visual changes that don't require a full re-render, mutate the
+  // iframe DOM directly. Color and text changes work this way today;
+  // more complex changes (added section, reordered) require a full
+  // server-side re-render which V1 mocks by reloading the iframe.
+  try {
+    const doc = $iframe.contentDocument;
+    if (!doc) return;
+    // Update brand colors
+    const root = doc.documentElement.style;
+    root.setProperty("--primary", site.brand.colors.primary);
+    if (site.brand.colors.accent) root.setProperty("--accent", site.brand.colors.accent);
+    if (site.brand.colors.neutral_dark) root.setProperty("--neutral-dark", site.brand.colors.neutral_dark);
+    if (site.brand.colors.neutral_light) root.setProperty("--neutral-light", site.brand.colors.neutral_light);
+
+    // Update hero headline + subheadline if present
+    const heroSection = site.sections.find(s => s.type === "hero");
+    if (heroSection) {
+      const h1 = doc.querySelector(".hero h1");
+      if (h1 && h1.textContent !== heroSection.props.headline) {
+        h1.textContent = heroSection.props.headline;
+      }
+      const sub = doc.querySelector(".hero .lead.hero-sub");
+      if (sub && heroSection.props.subheadline && sub.textContent !== heroSection.props.subheadline) {
+        sub.textContent = heroSection.props.subheadline;
+      }
+    }
+    // Update services grid layout
+    const servicesGrid = site.sections.find(s => s.type === "services_grid");
+    if (servicesGrid?.props.layout) {
+      const grid = doc.querySelector(".services-grid");
+      if (grid) {
+        grid.classList.remove("grid-2", "grid-3", "grid-4");
+        grid.classList.add(servicesGrid.props.layout);
+      }
+    }
+  } catch (err) {
+    // Iframe may be from different origin — we can't patch it. That's OK
+    // for V1; the Apply still updates state. In production we'd trigger
+    // a full server-side re-render and reload the iframe URL.
+    console.warn("Iframe patch failed (likely cross-origin); state updated only.", err);
+  }
+}
+
+/* ---------- history ---------- */
+
+function renderHistory() {
+  const rows = history.map((entry, i) => {
+    const ago = relativeTime(entry.timestamp);
+    const klass = i === 0 ? "history-row current" : entry.isLaunch ? "history-row launch" : "history-row";
+    const launchTag = entry.isLaunch ? '<strong style="color: var(--primary)">★ </strong>' : "";
+    return `
+      <div class="${klass}" data-idx="${i}">
+        <span class="history-dot"></span>
+        <div class="history-meta">
+          <div class="history-narration">${launchTag}${escapeHtml(entry.narration)}</div>
+          <div class="history-time">${ago}</div>
+        </div>
+        <div class="history-actions">
+          <button class="btn btn-ghost preview-history-btn" data-idx="${i}">Preview</button>
+          <button class="btn btn-primary restore-btn" data-idx="${i}">Restore</button>
+        </div>
+      </div>`;
+  }).join("");
+  $historyTab.innerHTML = rows;
+
+  $historyTab.querySelectorAll(".restore-btn").forEach(btn => {
+    btn.addEventListener("click", () => restoreVersion(parseInt(btn.dataset.idx)));
+  });
+  $historyTab.querySelectorAll(".preview-history-btn").forEach(btn => {
+    btn.addEventListener("click", () => previewVersion(parseInt(btn.dataset.idx)));
+  });
+}
+
+function restoreVersion(idx) {
+  const entry = history[idx];
+  if (!entry) return;
+  const restoredSite = structuredClone(entry.siteJson);
+  history.unshift({
+    siteJson: restoredSite,
+    narration: `Restored: ${entry.narration}`,
+    timestamp: Date.now()
+  });
+  currentSite = restoredSite;
+  patchIframePreview(currentSite);
+  renderHistory();
+  flashSaveStatus("Restored");
+  // Switch to the preview tab so the user sees the result
+  switchTab("preview");
+}
+
+function previewVersion(idx) {
+  // V1: just patch iframe with this version (without committing to history).
+  // In production: render to a temp preview URL and open it in a new pane.
+  const entry = history[idx];
+  if (!entry) return;
+  patchIframePreview(entry.siteJson);
+  switchTab("preview");
+  flashSaveStatus(`Previewing: ${entry.narration.slice(0, 30)}...`);
+  // Restore current state after 5 seconds so they don't lose the live view
+  setTimeout(() => {
+    patchIframePreview(currentSite);
+    flashSaveStatus("All changes saved");
+  }, 5000);
+}
+
+/* ---------- tabs / device toggle ---------- */
+
+function switchTab(tab) {
+  document.querySelectorAll(".preview-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  $previewTab.style.display = tab === "preview" ? "" : "none";
+  $historyTab.classList.toggle("active", tab === "history");
+}
+
+document.querySelectorAll(".preview-tab").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+document.querySelectorAll(".device-toggle button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".device-toggle button").forEach(b => b.classList.toggle("active", b === btn));
+    $previewFrame.classList.toggle("mobile", btn.dataset.device === "mobile");
+  });
+});
+
+/* ---------- top-bar actions ---------- */
+
+$publishBtn.addEventListener("click", () => {
+  // V1: just visual feedback. In production this triggers /api/apply →
+  // commit + deploy + custom-domain check.
+  $publishBtn.disabled = true;
+  $publishBtn.textContent = "Publishing...";
+  setTimeout(() => {
+    $publishBtn.disabled = false;
+    $publishBtn.innerHTML = "Publish · live in 30s";
+    flashSaveStatus("✓ Published — live now");
+  }, 1500);
+});
+
+$downloadBtn.addEventListener("click", () => {
+  // Easy Exit lite: download the current site.json
+  const blob = new Blob([JSON.stringify(currentSite, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${currentSite.meta.customer_slug}-site.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ---------- composer ---------- */
+
+$send.addEventListener("click", sendRequest);
+$input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendRequest();
+  }
+});
+
+/* ---------- helpers ---------- */
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function relativeTime(ts) {
+  const diffMs = Date.now() - ts;
+  const sec = Math.round(diffMs / 1000);
+  const min = Math.round(sec / 60);
+  const hr = Math.round(min / 60);
+  const day = Math.round(hr / 24);
+  if (sec < 30) return "just now";
+  if (min < 1) return `${sec}s ago`;
+  if (min < 60) return `${min} min ago`;
+  if (hr < 24) return `${hr} hour${hr > 1 ? "s" : ""} ago`;
+  return `${day} day${day > 1 ? "s" : ""} ago`;
+}
+
+let saveStatusTimeout = null;
+function flashSaveStatus(msg) {
+  $saveStatusText.textContent = msg;
+  clearTimeout(saveStatusTimeout);
+  saveStatusTimeout = setTimeout(() => {
+    $saveStatusText.textContent = "All changes saved";
+  }, 3500);
+}
+
+/* ---------- bootstrap ---------- */
+
+renderHistory();
+$input.focus();
+</script>
+</body>
+</html>
