@@ -1,6 +1,7 @@
 /**
- * STEP 3 DEBUG: instrument every step into a log array, return it in the
- * response so we can see exactly where execution dies.
+ * STEP 4 DEBUG: instead of calling Gemini, call a known-good URL (httpbin)
+ * to determine if the issue is specifically with Gemini's endpoint or
+ * with fetching from CF Pages in general.
  */
 
 export async function onRequestGet({ request, env }) {
@@ -16,99 +17,58 @@ export async function onRequestGet({ request, env }) {
 
 export async function onRequestPost({ request, env }) {
   const log = [];
-  log.push("entered onRequestPost");
+  log.push("entered POST");
 
   try {
-    let body;
-    try {
-      body = await request.json();
-      log.push("parsed body, has siteJson=" + !!body.siteJson);
-    } catch (err) {
-      log.push("body parse threw: " + describe(err));
-      return logResponse(400, log);
-    }
+    const body = await request.json().catch(() => null);
+    log.push("body: " + (body ? "ok" : "null"));
 
-    if (!body || !body.siteJson || typeof body.siteJson !== "object") {
-      log.push("invalid body");
-      return logResponse(400, log);
-    }
-    if (typeof body.request !== "string" || body.request.length === 0) {
-      log.push("invalid request string");
-      return logResponse(400, log);
+    if (!body || !body.siteJson) {
+      log.push("missing siteJson");
+      return logResp(400, log);
     }
     log.push("validation passed");
 
-    const provider = (env.MODEL_PROVIDER || "gemini").toLowerCase();
-    log.push("provider=" + provider);
-
-    if (!env.GEMINI_API_KEY) {
-      log.push("no api key");
-      return logResponse(500, log);
-    }
-    log.push("api key length=" + env.GEMINI_API_KEY.length);
-
-    log.push("about to build Gemini request");
-    const model = "gemini-2.5-flash";
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      model +
-      ":generateContent?key=" +
-      env.GEMINI_API_KEY;
-    log.push("url length=" + url.length);
-
-    const reqBody = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text:
-                "Translate this request into a tiny JSON: {answer:'green'}. Request: " +
-                body.request,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 256,
-        responseMimeType: "application/json",
-      },
-    };
-    log.push("reqBody built");
-
-    const reqBodyStr = JSON.stringify(reqBody);
-    log.push("reqBody stringified, length=" + reqBodyStr.length);
-
-    log.push("calling fetch");
-    let r;
+    log.push("about to fetch Google generativelanguage");
+    let r1, t1;
     try {
-      r = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: reqBodyStr,
-      });
-      log.push("fetch returned status=" + r.status);
+      r1 = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models?key=NOTAKEY",
+        { method: "GET" }
+      );
+      log.push("googleapis status=" + r1.status);
+      t1 = await r1.text();
+      log.push("googleapis text len=" + t1.length);
     } catch (err) {
-      log.push("fetch threw: " + describe(err));
-      return logResponse(502, log);
+      log.push("googleapis fetch threw: " + describe(err));
     }
 
-    let rawText;
+    log.push("about to fetch httpbin");
+    let r2, t2;
     try {
-      rawText = await r.text();
-      log.push("read text, length=" + rawText.length);
+      r2 = await fetch("https://httpbin.org/get", { method: "GET" });
+      log.push("httpbin status=" + r2.status);
+      t2 = await r2.text();
+      log.push("httpbin text len=" + t2.length);
     } catch (err) {
-      log.push("text() threw: " + describe(err));
-      return logResponse(502, log);
+      log.push("httpbin fetch threw: " + describe(err));
     }
 
-    log.push("first 100 chars of response: " + rawText.slice(0, 100));
+    log.push("about to fetch api.stripe.com");
+    let r3, t3;
+    try {
+      r3 = await fetch("https://api.stripe.com/v1/charges", { method: "GET" });
+      log.push("stripe status=" + r3.status);
+      t3 = await r3.text();
+      log.push("stripe text len=" + t3.length);
+    } catch (err) {
+      log.push("stripe fetch threw: " + describe(err));
+    }
 
-    return logResponse(r.ok ? 200 : 502, log);
+    return logResp(200, log);
   } catch (err) {
     log.push("UNCAUGHT: " + describe(err));
-    return logResponse(500, log);
+    return logResp(500, log);
   }
 }
 
@@ -123,7 +83,7 @@ export async function onRequestOptions() {
   });
 }
 
-function logResponse(status, log) {
+function logResp(status, log) {
   return new Response(JSON.stringify({ status, log }), {
     status,
     headers: {
