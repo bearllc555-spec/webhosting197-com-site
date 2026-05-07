@@ -1413,7 +1413,6 @@ function setupSectionTargeting() {
     "[data-press-text-edit].press-editing {",
     "  outline: 2px solid rgba(245, 158, 11, 1.0) !important;",
     "  outline-offset: -2px;",
-    "  border-radius: 4px;",
     "  cursor: text;",
     "  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 14px rgba(245, 158, 11, 0.30);",
     "}",
@@ -1741,13 +1740,15 @@ function enterInlineEdit(el) {
   $targetLabel.textContent = info.label;
   $targetPill.classList.add("show");
 
-  // For buttons: stash any child SVG icon BEFORE the user starts editing, so
-  // the cursor only sees plain text. Restored on commit/revert.
+  // For buttons: protect any child SVG icon from the contenteditable cursor by
+  // marking it contenteditable="false". This keeps the SVG in the DOM (so the
+  // button doesn't visibly shrink), but tells the browser the cursor must not
+  // land on it and the user can't delete it. Restored on commit/revert.
   if (info.isButton) {
     const svg = el.querySelector("svg");
     if (svg) {
-      el._pressStashedSVG = svg;
-      svg.remove();
+      el._pressProtectedSVG = svg;
+      svg.setAttribute("contenteditable", "false");
     }
   }
 
@@ -1812,10 +1813,12 @@ function commitInlineEdit() {
   delete el.dataset.pressOriginalText;
   activelyEditing = null;
 
-  // Restore SVG icon for buttons (regardless of whether value changed)
-  if (info.isButton && el._pressStashedSVG) {
-    el.appendChild(el._pressStashedSVG);
-    delete el._pressStashedSVG;
+  // Unprotect SVG (the cursor can land on it normally again outside edit mode).
+  // The SVG was never removed from the DOM — only marked contenteditable="false" —
+  // so there's nothing to re-append; just clean up the attribute.
+  if (info.isButton && el._pressProtectedSVG) {
+    el._pressProtectedSVG.removeAttribute("contenteditable");
+    delete el._pressProtectedSVG;
   }
 
   // No-op if unchanged
@@ -1826,10 +1829,6 @@ function commitInlineEdit() {
   // be able to silently destroy their headline.
   if (newValue.length === 0) {
     el.textContent = originalText;
-    if (info.isButton && el._pressStashedSVG) {
-      el.appendChild(el._pressStashedSVG);
-      delete el._pressStashedSVG;
-    }
     return;
   }
 
@@ -1879,11 +1878,20 @@ function commitInlineEdit() {
 function revertInlineEdit() {
   if (!activelyEditing) return;
   const { el, originalText, info, keydownListener, blurListener } = activelyEditing;
-  el.textContent = originalText;
-  // Restore SVG icon for buttons (textContent= cleared all children including SVG)
-  if (info && info.isButton && el._pressStashedSVG) {
-    el.appendChild(el._pressStashedSVG);
-    delete el._pressStashedSVG;
+  // For buttons: the SVG is still in the DOM (we only marked it
+  // contenteditable="false"), so setting textContent would wipe it. Walk text
+  // nodes instead and restore only the original text content.
+  if (info && info.isButton && el._pressProtectedSVG) {
+    // Replace text-bearing children with the original text, keep the SVG.
+    const svg = el._pressProtectedSVG;
+    Array.from(el.childNodes).forEach((n) => {
+      if (n !== svg) el.removeChild(n);
+    });
+    el.insertBefore(document.createTextNode(originalText + " "), svg);
+    svg.removeAttribute("contenteditable");
+    delete el._pressProtectedSVG;
+  } else {
+    el.textContent = originalText;
   }
   el.removeAttribute("contenteditable");
   el.classList.remove("press-editing");
