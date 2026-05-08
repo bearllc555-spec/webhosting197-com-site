@@ -58,10 +58,11 @@ export async function onRequestGet({ env }) {
       .sort((a, b) => a.n - b.n);
 
     const next = available[0];
-    // Self-adjusting math: claimedCount = total existing founder codes minus available.
-    // If only 50 codes exist in Stripe but MAX_FOUNDERS=100, claimedCount tracks
-    // actual redemptions out of what was provisioned — not "missing slots = claimed."
-    const claimedCount = allFounder.length - available.length;
+    // claimedCount = founder codes that were actually redeemed by a real customer.
+    // (max_redemptions=1 means redemption flips active to false; we count by
+    // times_redeemed > 0 so manually-deactivated-never-used codes don't get
+    // miscounted as "claimed.")
+    const claimedCount = allFounder.filter((pc) => pc.times_redeemed > 0).length;
 
     if (!next) {
       // All 50 redeemed — founder pricing closed.
