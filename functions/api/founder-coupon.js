@@ -33,7 +33,7 @@
 
 const FOUNDER_PREFIX = "FOUNDER";
 const STANDARD_PRICE = 197;
-const MAX_FOUNDERS = 50;
+const MAX_FOUNDERS = 100;
 const STRIPE_API_VERSION = "2023-10-16";
 const CACHE_SECONDS = 30;
 
@@ -47,18 +47,21 @@ export async function onRequestGet({ env }) {
   try {
     const promoCodes = await fetchAllFounderPromoCodes(apiKey);
 
-    // Active + unredeemed founder codes, parsed and sorted by founder number.
-    const available = promoCodes
+    // Parse founder numbers and sort.
+    const allFounder = promoCodes
+      .map((pc) => ({ ...pc, n: parseFounderNumber(pc.code) }))
+      .filter((pc) => pc.n !== null);
+
+    // Active + unredeemed founder codes (the ones still claimable).
+    const available = allFounder
       .filter((pc) => pc.active && pc.times_redeemed === 0)
-      .map((pc) => ({
-        ...pc,
-        n: parseFounderNumber(pc.code),
-      }))
-      .filter((pc) => pc.n !== null)
       .sort((a, b) => a.n - b.n);
 
     const next = available[0];
-    const claimedCount = MAX_FOUNDERS - available.length;
+    // Self-adjusting math: claimedCount = total existing founder codes minus available.
+    // If only 50 codes exist in Stripe but MAX_FOUNDERS=100, claimedCount tracks
+    // actual redemptions out of what was provisioned — not "missing slots = claimed."
+    const claimedCount = allFounder.length - available.length;
 
     if (!next) {
       // All 50 redeemed — founder pricing closed.
@@ -101,7 +104,7 @@ function parseFounderNumber(code) {
 async function fetchAllFounderPromoCodes(apiKey) {
   const all = [];
   let startingAfter = null;
-  // Defensive cap — at 50 founders we need at most 1 page; loop bounded so a
+  // Defensive cap — at 100 founders we still need only 1 page; loop bounded so a
   // misbehaving cursor can't spin us forever.
   for (let page = 0; page < 5; page++) {
     const url = new URL("https://api.stripe.com/v1/promotion_codes");

@@ -229,7 +229,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v05</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v06</span></a>
     <div class="topnav-right">
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
@@ -255,7 +255,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 </div>
 
 <section class="hero">
-  <div class="eyebrow"><span class="dot"></span>Invitation only &middot; 50 of 50 spots remaining</div>
+  <div class="eyebrow"><span class="dot"></span>Invitation only &middot; <span id="eyebrowSpots">100 of 100</span> spots remaining</div>
   <h1>Hosted for life. $197 once.</h1>
   <p class="lead">Hand-picked customers only. Apply to become a founder.</p>
 </section>
@@ -266,10 +266,10 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     <span class="pricing-tag">lifetime</span>
     <div class="price-display">
       <span class="price-currency">$</span>
-      <span class="price-amount" id="priceAmount">197</span>
+      <span class="price-amount" id="priceAmount">0</span>
       <span class="price-suffix">once</span>
     </div>
-    <p class="price-detail">Founder applications open &middot; <span class="founder-remaining" id="founderRemaining">50</span> of 50 spots remaining.</p>
+    <p class="price-detail">Founder applications open &middot; <span class="founder-remaining" id="founderRemaining">100</span> of 100 spots remaining.</p>
     <div class="founder-bar" aria-hidden="true"><div class="founder-bar-fill" id="founderBarFill"></div></div>
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
 
@@ -302,7 +302,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     <!-- State 3: success -->
     <div class="reserve-state" id="state3">
       <div class="reserve-success show"><div class="reserve-success-text">Application received. We review every application individually and respond to <strong id="successEmail"></strong> within 48 hours.</div><div class="reserve-success-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div></div>
-      <p class="reserve-note">First 50 accepted applicants lock in founder status for life.</p>
+      <p class="reserve-note">First 100 accepted applicants lock in founder status for life.</p>
     </div>
 
     <div class="reserve-error" id="reserveError"></div>
@@ -475,20 +475,40 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       }
       requestAnimationFrame(tick);
     }
-    function run(){
+    // Climbing-price reveal: count up from 0 to the current next-founder price
+    // returned by /api/founder-coupon. Lands on the price the visitor would pay
+    // if they signed up right now. Confetti bursts at the landing.
+    var pendingPrice = 197; // safe default if /api/founder-coupon is slow or down
+    var priceFetched = false;
+    function startCount(){
       if(fired)return;fired=true;
       amt.classList.add('counting');
-      // Phase 1: 999 -> 197 (heavy easeOutQuint), then flash to anchor the brand price.
-      tickPhase(999,197,1920,function(p){return 1-Math.pow(1-p,5);},function(){
-        flashOnce();
+      // 0 -> pendingPrice (heavy easeOutQuint), then flash + confetti at landing.
+      tickPhase(0,pendingPrice,1920,function(p){return 1-Math.pow(1-p,5);},function(){
+        flashOnce(function(){
+          var rect=amt.getBoundingClientRect();
+          confettiBurst(rect.left+rect.width/2,rect.top+rect.height/2);
+        });
       });
     }
+    function maybeStart(){
+      // Only fire once both conditions met: (a) price loaded from API,
+      // (b) element scrolled into view. Either order is fine.
+      if(priceFetched && observerFired) startCount();
+    }
+    var observerFired = false;
+    // Expose hook so /api/founder-coupon fetch handler can trigger us.
+    window.__priceCountUpReady = function(p){
+      pendingPrice = (typeof p === 'number' && p > 0) ? p : 197;
+      priceFetched = true;
+      maybeStart();
+    };
     if('IntersectionObserver' in window){
       var io=new IntersectionObserver(function(entries){
-        entries.forEach(function(e){if(e.isIntersecting){setTimeout(run,500);io.disconnect();}});
-      },{rootMargin:'-40% 0px -40% 0px',threshold:0});
+        entries.forEach(function(e){if(e.isIntersecting){observerFired=true;io.disconnect();setTimeout(maybeStart,400);}});
+      },{threshold:0.18});
       io.observe(amt);
-    }else{run();}
+    }else{observerFired=true;setTimeout(maybeStart,400);}
   }
 
 
@@ -594,20 +614,28 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     if(!stripeBtn)return;
     fetch('/api/founder-coupon').then(function(r){return r.json();}).then(function(j){
       var claimed=(typeof j.claimedCount==='number')?j.claimedCount:0;
-      var remaining=Math.max(0,50-claimed);
+      var maxF=(typeof j.maxFounders==='number')?j.maxFounders:100;
+      var remaining=Math.max(0,maxF-claimed);
       var price=(typeof j.currentPrice==='number')?j.currentPrice:197;
       if(remEl)remEl.textContent=remaining;
-      if(bar)bar.style.width=(claimed/50*100)+'%';
-      if(priceEl)priceEl.textContent=price;
+      var ebSpots=document.getElementById('eyebrowSpots');
+      if(ebSpots)ebSpots.textContent=remaining+' of '+maxF;
+      if(bar)bar.style.width=(claimed/maxF*100)+'%';
       if(ctaPriceEl)ctaPriceEl.textContent=price;
+      // Pass the current price to the count-up animation; if the animation
+      // module loaded, it'll start as soon as the element scrolls into view.
+      if(typeof window.__priceCountUpReady === 'function') window.__priceCountUpReady(price);
+      else if(priceEl) priceEl.textContent=price;
       if(j.founderActive && j.code){
         stripeBtn.href=STRIPE_LINK+'?prefilled_promo_code='+encodeURIComponent(j.code);
       }else{
-        // All 50 founders claimed — standard $197 path, no promo prefill
+        // All founders claimed — standard $197 path, no promo prefill
         stripeBtn.href=STRIPE_LINK;
       }
     }).catch(function(){
-      // /api/founder-coupon unreachable — fail soft, leave button at default $197 splash text
+      // /api/founder-coupon unreachable — fail soft, kick the count-up to its default $197.
+      if(typeof window.__priceCountUpReady === 'function') window.__priceCountUpReady(197);
+      else if(priceEl) priceEl.textContent=197;
       stripeBtn.href=STRIPE_LINK;
     });
   })();
