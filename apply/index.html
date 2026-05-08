@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apply for invitation - webhosting197</title>
+<meta name="description" content="Apply to become a webhosting197 founder. Hand-picked customers only.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="canonical" href="https://webhosting197.com/apply/">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBFBFC;
+    --bg-card: #FFFFFF;
+    --ink: #0F172A;
+    --ink-soft: #1E293B;
+    --slate: #64748B;
+    --slate-light: #94A3B8;
+    --rule: #E5E7EB;
+    --rule-strong: #D1D5DB;
+    --blue: #2563EB;
+    --blue-deep: #1D4ED8;
+    --blue-soft: #EFF6FF;
+    --green: #10B981;
+    --red: #DC2626;
+    --amber: #F59E0B;
+    --max: 720px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#FFFFFFEE;backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:10}
+  .brand{display:inline-flex;align-items:baseline;gap:.04em;font-weight:800;font-size:21px;letter-spacing:-.04em;color:var(--ink);line-height:1;text-decoration:none}
+  .brand-slash{color:var(--ink);font-weight:800;letter-spacing:-.05em;margin-right:.04em}
+  .brand-text{color:var(--ink);font-weight:800;letter-spacing:-.04em}
+  .brand-num{color:var(--blue);font-weight:800;letter-spacing:-.05em}
+  .version{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:600;color:var(--slate-light);letter-spacing:.04em;text-transform:lowercase;vertical-align:7px;font-feature-settings:"tnum";text-decoration:none}
+  .home-link{color:var(--slate);text-decoration:none;font-size:14px;font-weight:500}
+  .home-link:hover{color:var(--ink)}
+
+  .wrap{max-width:var(--max);margin:0 auto;padding:48px 24px 96px}
+  .heading{font-size:clamp(28px,4.2vw,42px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin:0 0 14px;line-height:1.1}
+  .subhead{font-size:16px;color:var(--ink-soft);margin:0 0 40px;line-height:1.55;max-width:540px}
+
+  .progress{display:flex;gap:6px;margin-bottom:28px}
+  .progress-dot{flex:1;height:4px;border-radius:2px;background:var(--rule)}
+  .progress-dot.active{background:var(--blue)}
+  .progress-dot.done{background:var(--green)}
+
+  .step{background:var(--bg-card);border:1px solid var(--rule);border-radius:14px;padding:28px;margin-bottom:18px;transition:opacity .2s,border-color .2s}
+  .step.disabled{opacity:.45;pointer-events:none}
+  .step.disabled .step-cta{display:none}
+  .step.active{border-color:var(--rule-strong)}
+
+  .step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-size:12px;font-weight:700;letter-spacing:0;margin-right:10px;vertical-align:1px}
+  .step.done .step-num{background:rgba(16,185,129,.12);color:var(--green)}
+  .step.disabled .step-num{background:var(--bg);color:var(--slate-light)}
+  .step-title{font-size:18px;font-weight:700;letter-spacing:-.015em;color:var(--ink);margin:0 0 4px;display:flex;align-items:center}
+  .step-sub{font-size:13.5px;color:var(--slate);margin:0 0 22px 36px;line-height:1.5}
+
+  .field{margin-bottom:14px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  @media(max-width:520px){.field-row{grid-template-columns:1fr}}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;letter-spacing:-.005em}
+  .field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1px solid var(--rule-strong);border-radius:9px;font-family:inherit;font-size:15px;color:var(--ink);background:#fff;outline:0;transition:border-color .15s,box-shadow .15s;font-feature-settings:"ss01","cv11"}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .field input::placeholder,.field textarea::placeholder{color:var(--slate-light)}
+  .field input:disabled,.field textarea:disabled,.field select:disabled{background:var(--bg);color:var(--slate-light);cursor:not-allowed}
+  .field-help{font-size:12px;color:var(--slate);margin-top:5px}
+
+  .step-cta{margin-top:6px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:.4rem;padding:11px 20px;font-size:14.5px;font-weight:600;border-radius:10px;border:1px solid transparent;cursor:pointer;font-family:inherit;transition:transform .12s,box-shadow .12s,background .15s;text-decoration:none}
+  .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 1px 2px rgba(15,23,42,.04),0 4px 12px rgba(37,99,235,.18)}
+  .btn-primary:hover{background:var(--blue-deep)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn-ghost{background:transparent;color:var(--slate);border:0;padding:11px 8px}
+  .btn-ghost:hover{color:var(--ink)}
+  .btn svg{width:14px;height:14px}
+
+  .alert{margin-top:14px;padding:12px 14px;border-radius:9px;font-size:13.5px;line-height:1.5}
+  .alert-error{background:rgba(220,38,38,.07);color:#991B1B;border:1px solid rgba(220,38,38,.18)}
+  .alert-info{background:var(--blue-soft);color:var(--blue-deep);border:1px solid rgba(37,99,235,.18)}
+  .alert-success{background:rgba(16,185,129,.07);color:#065F46;border:1px solid rgba(16,185,129,.25)}
+
+  .verified-row{display:flex;align-items:center;gap:10px;padding:14px 16px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.25);border-radius:10px;font-size:13.5px;color:#065F46}
+  .verified-row svg{width:16px;height:16px;flex-shrink:0;color:var(--green)}
+  .verified-row strong{color:#065F46;font-weight:600}
+
+  .placeholder-fields{display:flex;flex-direction:column;gap:10px;margin-left:36px}
+  .placeholder-line{height:38px;background:linear-gradient(90deg,var(--bg) 0%,#F1F5F9 50%,var(--bg) 100%);border:1px dashed var(--rule-strong);border-radius:8px;display:flex;align-items:center;padding:0 14px;font-size:12.5px;color:var(--slate-light);font-style:italic;letter-spacing:-.005em}
+
+  .coming-next{margin-left:36px;font-size:13px;color:var(--slate);font-style:italic}
+
+  .footer-note{margin-top:36px;font-size:12.5px;color:var(--slate);text-align:center;line-height:1.6}
+  .footer-note a{color:var(--slate);text-decoration:underline}
+
+  /* hidden by default; shown via JS state */
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v04</span></a>
+  <a href="/" class="home-link">&larr; Back home</a>
+</div>
+
+<div class="wrap">
+  <h1 class="heading">Apply for invitation</h1>
+  <p class="subhead">Hand-picked customers only. We review every application individually and respond within 48 hours. We accept fewer than 1 in 10.</p>
+
+  <div class="progress" aria-hidden="true">
+    <div class="progress-dot active" id="dot1"></div>
+    <div class="progress-dot" id="dot2"></div>
+    <div class="progress-dot" id="dot3"></div>
+    <div class="progress-dot" id="dot4"></div>
+    <div class="progress-dot" id="dot5"></div>
+    <div class="progress-dot" id="dot6"></div>
+  </div>
+
+  <!-- Step 1 - Identity (gate) -->
+  <div class="step active" id="step1">
+    <div class="step-title"><span class="step-num">1</span>Identity</div>
+    <div class="step-sub">Your name, cell, and email. We&rsquo;ll text you a code to verify your phone before you continue.</div>
+
+    <!-- Phase 1A: collect identity -->
+    <div id="step1-collect">
+      <div class="field-row">
+        <div class="field">
+          <label for="firstName">First name</label>
+          <input id="firstName" type="text" autocomplete="given-name" required>
+        </div>
+        <div class="field">
+          <label for="lastName">Last name</label>
+          <input id="lastName" type="text" autocomplete="family-name" required>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="phone">Cell phone</label>
+          <input id="phone" type="tel" placeholder="(973) 555-0100" autocomplete="tel" inputmode="tel" required>
+          <div class="field-help">We send a 6-digit verification code via SMS.</div>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="you@yourbusiness.com" autocomplete="email" inputmode="email" required>
+        </div>
+      </div>
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary" id="sendCodeBtn">
+          Send verification code
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div id="step1-error" class="alert alert-error" hidden></div>
+    </div>
+
+    <!-- Phase 1B: enter code -->
+    <div id="step1-verify" hidden>
+      <div class="alert alert-info">We sent a 6-digit code to <strong id="phoneEcho"></strong>. Enter it below.</div>
+      <div class="field-row" style="margin-top:14px">
+        <div class="field">
+          <label for="smsCode">Verification code</label>
+          <input id="smsCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
+        </div>
+        <div></div>
+      </div>
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary" id="verifyCodeBtn">
+          Verify and continue
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <button type="button" class="btn btn-ghost" id="resendBtn">Send a new code</button>
+      </div>
+      <div id="step1-verify-error" class="alert alert-error" hidden></div>
+    </div>
+
+    <!-- Phase 1C: verified -->
+    <div id="step1-done" hidden>
+      <div class="verified-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <div>Identity verified. <strong id="verifiedSummary"></strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 - Your business (placeholder for v04, real fields ship in v05) -->
+  <div class="step disabled" id="step2">
+    <div class="step-title"><span class="step-num">2</span>Your business</div>
+    <div class="step-sub">Business name, industry, location, size.</div>
+    <div class="placeholder-fields">
+      <div class="placeholder-line">Business name &middot; Industry vertical &middot; Years in business</div>
+      <div class="placeholder-line">Number of employees &middot; Annual revenue range &middot; HQ city + state</div>
+      <div class="placeholder-line">Service area depth (local town &middot; metro &middot; state &middot; national)</div>
+    </div>
+    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
+  </div>
+
+  <!-- Step 3 - Web + marketing presence -->
+  <div class="step disabled" id="step3">
+    <div class="step-title"><span class="step-num">3</span>Web &amp; marketing presence</div>
+    <div class="step-sub">Current site, Google Business, advertising, agency relationships.</div>
+    <div class="placeholder-fields">
+      <div class="placeholder-line">Current website URL &middot; Google Business Profile (Y/N) &middot; Currently advertising on</div>
+      <div class="placeholder-line">Approximate monthly marketing spend &middot; Currently with an agency (Y/N + monthly fee)</div>
+    </div>
+    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
+  </div>
+
+  <!-- Step 4 - Services + offering -->
+  <div class="step disabled" id="step4">
+    <div class="step-title"><span class="step-num">4</span>Services &amp; offering</div>
+    <div class="step-sub">What you sell, ticket size, service area, seasonality.</div>
+    <div class="placeholder-fields">
+      <div class="placeholder-line">Top 3-5 services or product categories</div>
+      <div class="placeholder-line">Average ticket / job size &middot; Service area towns &middot; Seasonal patterns</div>
+      <div class="placeholder-line">Top 1-2 services that drive most revenue</div>
+    </div>
+    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
+  </div>
+
+  <!-- Step 5 - Goals + voice -->
+  <div class="step disabled" id="step5">
+    <div class="step-title"><span class="step-num">5</span>Goals &amp; voice</div>
+    <div class="step-sub">What success looks like, who your ideal customer is, what to avoid.</div>
+    <div class="placeholder-fields">
+      <div class="placeholder-line">What&rsquo;s the most important thing visitors should know?</div>
+      <div class="placeholder-line">Biggest current challenge &middot; What success looks like in 12 months</div>
+      <div class="placeholder-line">Ideal customer profile &middot; Anything you DON&rsquo;T want</div>
+    </div>
+    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
+  </div>
+
+  <!-- Step 6 - Logistics + submit -->
+  <div class="step disabled" id="step6">
+    <div class="step-title"><span class="step-num">6</span>Logistics &amp; submit</div>
+    <div class="step-sub">Best times to reach you, how you found us, anything else.</div>
+    <div class="placeholder-fields">
+      <div class="placeholder-line">Best times to reach you &middot; Time zone</div>
+      <div class="placeholder-line">How did you hear about us &middot; Anything else</div>
+    </div>
+    <div class="coming-next" style="margin-top:14px">Submit handler ships in the next build.</div>
+  </div>
+
+  <div class="footer-note">
+    Your information stays with us. We never sell or share applicant data.<br>
+    Questions? <a href="mailto:hello@webhosting197.com">hello@webhosting197.com</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  var byId = function(id){ return document.getElementById(id); };
+
+  var firstNameEl = byId('firstName');
+  var lastNameEl = byId('lastName');
+  var phoneEl = byId('phone');
+  var emailEl = byId('email');
+  var sendBtn = byId('sendCodeBtn');
+  var verifyBtn = byId('verifyCodeBtn');
+  var resendBtn = byId('resendBtn');
+  var smsCodeEl = byId('smsCode');
+  var step1Collect = byId('step1-collect');
+  var step1Verify = byId('step1-verify');
+  var step1Done = byId('step1-done');
+  var phoneEcho = byId('phoneEcho');
+  var verifiedSummary = byId('verifiedSummary');
+  var step1Error = byId('step1-error');
+  var step1VerifyError = byId('step1-verify-error');
+
+  // verifiedToken stored in memory; the rest of the form (v05+) will pass it
+  // along on submit so the server-signed proof of identity verification accompanies
+  // the Formspree POST.
+  var state = {
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    verifiedToken: null,
+  };
+
+  function showError(el, msg) {
+    if (!el) return;
+    el.textContent = msg;
+    el.hidden = false;
+  }
+  function clearError(el) {
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = '';
+  }
+  function setBusy(btn, busy, busyLabel) {
+    if (!btn) return;
+    btn.disabled = !!busy;
+    if (busy) { btn.dataset._label = btn.innerHTML; btn.textContent = busyLabel || 'Working...'; }
+    else if (btn.dataset._label) { btn.innerHTML = btn.dataset._label; delete btn.dataset._label; }
+  }
+
+  function formatPhoneDisplay(raw) {
+    var d = (raw || '').replace(/\D/g, '');
+    if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+    if (d.length === 10) return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
+    return raw;
+  }
+
+  function unlockNextSteps() {
+    // v04: visually mark step 1 as done; subsequent steps remain disabled
+    // until v05+ ships their form fields.
+    var s1 = byId('step1');
+    s1.classList.remove('active');
+    s1.classList.add('done');
+    byId('dot1').classList.remove('active');
+    byId('dot1').classList.add('done');
+    // v05 will: enable steps 2-3 here, focus first field
+  }
+
+  sendBtn.addEventListener('click', async function(){
+    clearError(step1Error);
+    var firstName = (firstNameEl.value || '').trim();
+    var lastName = (lastNameEl.value || '').trim();
+    var phone = (phoneEl.value || '').trim();
+    var email = (emailEl.value || '').trim().toLowerCase();
+
+    if (!firstName || !lastName) { showError(step1Error, 'Please enter your first and last name.'); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError(step1Error, 'Please enter a valid email.'); return; }
+    var d = phone.replace(/\D/g,'');
+    if (d.length !== 10 && !(d.length === 11 && d.charAt(0) === '1')) { showError(step1Error, 'Please enter a 10-digit US phone number.'); return; }
+
+    setBusy(sendBtn, true, 'Sending code...');
+    try {
+      var resp = await fetch('/api/apply/sms-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ firstName: firstName, lastName: lastName, phone: phone, email: email })
+      });
+      var data = await resp.json().catch(function(){ return { ok: false, error: 'bad_response' }; });
+      if (!resp.ok || !data.ok) {
+        showError(step1Error, data.message || 'Could not send code. Try again.');
+        setBusy(sendBtn, false);
+        return;
+      }
+      state.firstName = firstName;
+      state.lastName = lastName;
+      state.phone = phone;
+      state.email = email;
+      phoneEcho.textContent = formatPhoneDisplay(phone);
+      step1Collect.hidden = true;
+      step1Verify.hidden = false;
+      smsCodeEl.focus();
+    } catch (err) {
+      showError(step1Error, 'Network error. Try again.');
+      setBusy(sendBtn, false);
+    }
+  });
+
+  verifyBtn.addEventListener('click', async function(){
+    clearError(step1VerifyError);
+    var code = (smsCodeEl.value || '').replace(/\D/g, '');
+    if (code.length < 4) { showError(step1VerifyError, 'Enter the code we sent.'); return; }
+
+    setBusy(verifyBtn, true, 'Verifying...');
+    try {
+      var resp = await fetch('/api/apply/sms-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ phone: state.phone, code: code })
+      });
+      var data = await resp.json().catch(function(){ return { ok: false, error: 'bad_response' }; });
+      if (!resp.ok || !data.ok) {
+        showError(step1VerifyError, data.message || 'That code did not work. Try again.');
+        setBusy(verifyBtn, false);
+        return;
+      }
+      state.verifiedToken = data.verifiedToken;
+      step1Verify.hidden = true;
+      step1Done.hidden = false;
+      verifiedSummary.textContent = state.firstName + ' ' + state.lastName + ' — ' + formatPhoneDisplay(state.phone);
+      unlockNextSteps();
+    } catch (err) {
+      showError(step1VerifyError, 'Network error. Try again.');
+      setBusy(verifyBtn, false);
+    }
+  });
+
+  resendBtn.addEventListener('click', async function(){
+    clearError(step1VerifyError);
+    setBusy(resendBtn, true, 'Sending...');
+    try {
+      var resp = await fetch('/api/apply/sms-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ firstName: state.firstName, lastName: state.lastName, phone: state.phone, email: state.email })
+      });
+      var data = await resp.json().catch(function(){ return { ok: false }; });
+      if (!resp.ok || !data.ok) {
+        showError(step1VerifyError, data.message || 'Could not resend. Try again.');
+      } else {
+        showError(step1VerifyError, 'New code sent.');
+        step1VerifyError.classList.remove('alert-error');
+        step1VerifyError.classList.add('alert-info');
+        setTimeout(function(){
+          step1VerifyError.classList.remove('alert-info');
+          step1VerifyError.classList.add('alert-error');
+          clearError(step1VerifyError);
+        }, 4000);
+      }
+    } catch (err) {
+      showError(step1VerifyError, 'Network error. Try again.');
+    }
+    setBusy(resendBtn, false);
+  });
+
+  // Allow Enter in inputs to advance
+  [firstNameEl, lastNameEl, phoneEl, emailEl].forEach(function(el){
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); sendBtn.click(); }
+    });
+  });
+  smsCodeEl.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') { e.preventDefault(); verifyBtn.click(); }
+  });
+})();
+</script>
+
+</body>
+</html>
