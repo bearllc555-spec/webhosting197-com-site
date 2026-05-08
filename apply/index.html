@@ -50,6 +50,12 @@
   .topnav-link:hover{color:var(--ink)}
   .home-link{font-weight:500;font-size:14px;color:var(--ink-soft);text-decoration:none;transition:color .15s}
   .home-link:hover{color:var(--ink)}
+
+  /* v15 - topnav .btn matches splash .btn sizing exactly so Home pill visually mirrors splash Apply pill */
+  .topnav .btn{display:inline-flex;align-items:center;gap:.45rem;padding:.6rem 1.05rem;font-weight:500;font-size:14px;border-radius:8px;border:1px solid transparent;text-decoration:none;white-space:nowrap;cursor:pointer;font-family:inherit;transition:background .15s,color .15s,border-color .15s,transform .12s,box-shadow .15s}
+  .topnav .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:none}
+  .topnav .btn-primary:hover{background:var(--blue-deep);border-color:var(--blue-deep);box-shadow:0 4px 14px rgba(37,99,235,.22)}
+  .topnav .btn svg{width:13px;height:13px}
   @media(max-width:600px){.topnav-inner{padding:14px 20px}}
 
   /* HERO - mirrors splash hero scale + eyebrow */
@@ -209,9 +215,9 @@
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v14</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v15</span></a>
     <div class="topnav-right">
-      <a href="/" class="home-link">&larr; Back home</a>
+      <a href="/" class="btn btn-primary" id="navHomeBtn">Home <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
     </div>
   </div>
 </header>
