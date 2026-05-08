@@ -128,10 +128,16 @@ async function confirm(prompt) {
 }
 
 async function main() {
-  console.log("Connecting to Stripe...");
-  const acct = await stripeGet("/account");
-  console.log(`Connected: account ${acct.id} (${acct.business_profile?.name || acct.email || "no name"})`);
-  console.log(`Mode: ${apiKey.startsWith("sk_test_") ? "TEST" : apiKey.startsWith("sk_live_") ? "LIVE" : "UNKNOWN"}`);
+  // Mode detection from key prefix only — avoids GET /account which requires
+  // rak_accounts_kyc_basic_read scope that restricted keys often lack.
+  let mode = "UNKNOWN";
+  if (apiKey.startsWith("sk_test_") || apiKey.startsWith("rk_test_")) mode = "TEST";
+  else if (apiKey.startsWith("sk_live_") || apiKey.startsWith("rk_live_")) mode = "LIVE";
+  console.log(`Stripe key mode: ${mode}`);
+  console.log(`Key type: ${apiKey.startsWith("rk_") ? "Restricted (scoped)" : "Secret (full)"}`);
+  if (mode === "LIVE") {
+    console.log("**LIVE MODE** — coupons created here will be real and visible to real customers.");
+  }
 
   console.log("\nListing existing FOUNDER* promo codes...");
   const existingPromoCodes = await listAllFounderPromoCodes();
