@@ -10,47 +10,71 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #FBFBFC;
-    --bg-card: #FFFFFF;
-    --ink: #0F172A;
-    --ink-soft: #1E293B;
-    --slate: #64748B;
-    --slate-light: #94A3B8;
-    --rule: #E5E7EB;
-    --rule-strong: #D1D5DB;
+    /* v14 - mirrors splash palette exactly */
+    --bg: #FFFFFF;
+    --bg-soft: #FAFAFA;
+    --bg-card: #F7F7F5;
+    --ink: #1C1B1F;
+    --ink-soft: #5C5C66;
+    --slate: #85858C;
+    --slate-light: #9CA3AF;
+    --rule: #E8E8E8;
+    --rule-soft: #F0F0F0;
+    --rule-strong: #1C1B1F;
     --blue: #2563EB;
     --blue-deep: #1D4ED8;
     --blue-soft: #EFF6FF;
+    --emerald: #059669;
     --green: #10B981;
     --red: #DC2626;
     --amber: #F59E0B;
-    --max: 720px;
+    --max: 1080px;
+    --form-max: 720px;
   }
-  *,*::before,*::after{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:96px}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";letter-spacing:-.005em}
+  a{color:inherit;text-decoration:none}
 
-  .topnav{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#FFFFFFEE;backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--rule);position:sticky;top:0;z-index:10}
+  /* TOPNAV - mirrors splash Mercury-blur sticky header */
+  .topnav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid transparent;transition:border-color .25s}
+  .topnav.scrolled{border-bottom-color:var(--rule)}
+  .topnav-inner{max-width:var(--max);margin:0 auto;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
   .brand{display:inline-flex;align-items:baseline;gap:.04em;font-weight:800;font-size:21px;letter-spacing:-.04em;color:var(--ink);line-height:1;text-decoration:none}
-  .brand-slash{color:var(--ink);font-weight:800;letter-spacing:-.05em;margin-right:.04em}
   .brand-text{color:var(--ink);font-weight:800;letter-spacing:-.04em}
-  .brand-num{color:var(--blue);font-weight:800;letter-spacing:-.05em}
-  .version{display:inline-block;margin-left:7px;font-size:9.5px;font-weight:600;color:var(--slate-light);letter-spacing:.04em;text-transform:lowercase;vertical-align:7px;font-feature-settings:"tnum";text-decoration:none}
-  .home-link{color:var(--slate);text-decoration:none;font-size:14px;font-weight:500}
+  .brand-num{color:var(--blue);font-weight:800;letter-spacing:-.05em;position:relative;display:inline-block}
+  .brand-slash{color:var(--ink);font-weight:800;letter-spacing:-.05em;margin-right:.04em}
+  .version{display:inline-block;margin-left:7px;font-size:10px;font-weight:600;color:var(--slate-light);letter-spacing:.04em;text-transform:lowercase;vertical-align:7px;font-feature-settings:"tnum";text-decoration:none}
+  .topnav-right{display:flex;align-items:center;gap:1.25rem}
+  .topnav-link{font-weight:500;font-size:14px;color:var(--ink-soft);transition:color .15s;text-decoration:none}
+  .topnav-link:hover{color:var(--ink)}
+  .home-link{font-weight:500;font-size:14px;color:var(--ink-soft);text-decoration:none;transition:color .15s}
   .home-link:hover{color:var(--ink)}
+  @media(max-width:600px){.topnav-inner{padding:14px 20px}}
 
-  .wrap{max-width:var(--max);margin:0 auto;padding:48px 24px 96px}
-  .heading{font-size:clamp(28px,4.2vw,42px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin:0 0 14px;line-height:1.1}
-  .subhead{font-size:16px;color:var(--ink-soft);margin:0 0 40px;line-height:1.55;max-width:540px}
+  /* HERO - mirrors splash hero scale + eyebrow */
+  .hero{padding:80px 32px 24px;text-align:center;max-width:var(--max);margin:0 auto}
+  .eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;background:var(--bg-card);border:1px solid var(--rule-strong);border-radius:999px;font-size:12.5px;font-weight:500;color:var(--ink-soft);margin-bottom:28px}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);animation:dotPulse 2.4s ease-out infinite}
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes eyebrowGlow{0%,100%{box-shadow:0 0 0 0 rgba(5,150,105,0);text-shadow:0 0 0 rgba(5,150,105,0)}50%{box-shadow:0 0 18px 0 rgba(5,150,105,.42);text-shadow:0 0 6px rgba(5,150,105,.55)}}
+  .eyebrow{animation:eyebrowGlow 2.4s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){.eyebrow,.eyebrow .dot{animation:none}}
+  .heading{font-size:clamp(40px,6.4vw,68px);font-weight:700;letter-spacing:-.035em;line-height:1.04;color:var(--ink);max-width:18ch;margin:0 auto}
+  .subhead{font-size:clamp(16px,1.4vw,19px);color:var(--ink-soft);max-width:54ch;line-height:1.55;margin:24px auto 0;text-align:center}
+
+  /* Form wrapper - narrower than topnav for readability */
+  .wrap{max-width:var(--form-max);margin:0 auto;padding:48px 24px 80px}
 
   .progress{display:flex;gap:6px;margin-bottom:28px}
   .progress-dot{flex:1;height:4px;border-radius:2px;background:var(--rule)}
   .progress-dot.active{background:var(--blue)}
   .progress-dot.done{background:var(--green)}
 
-  .step{background:var(--bg-card);border:1px solid var(--rule);border-radius:14px;padding:28px;margin-bottom:18px;transition:opacity .2s,border-color .2s}
+  .step{background:#FFFFFF;border:1px solid var(--rule);border-radius:16px;padding:32px;margin-bottom:18px;transition:opacity .2s,border-color .2s;box-shadow:0 1px 2px rgba(0,0,0,.02)}
   .step.disabled{opacity:.45;pointer-events:none}
   .step.disabled .step-cta{display:none}
-  .step.active{border-color:var(--rule-strong)}
+  .step.active{border-color:var(--rule-strong);box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 28px rgba(0,0,0,.04)}
 
   .step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-size:12px;font-weight:700;letter-spacing:0;margin-right:10px;vertical-align:1px}
   .step.done .step-num{background:rgba(16,185,129,.12);color:var(--green)}
@@ -171,20 +195,34 @@
   .success-cta-note a{color:var(--blue);text-decoration:none;font-weight:600}
   .success-cta-note a:hover{text-decoration:underline}
 
+  /* FOOTER - mirrors splash bordered footer */
+  .foot{border-top:1px solid var(--rule);padding:32px;color:var(--slate);font-size:13px;text-align:center;margin-top:48px}
+  .foot a{color:var(--ink-soft);text-decoration:none}
+  .foot a:hover{color:var(--ink)}
+  .foot-tag{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-top:6px}
+
   /* hidden by default; shown via JS state */
   [hidden]{display:none !important}
 </style>
 </head>
 <body>
 
-<div class="topnav">
-  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v13</span></a>
-  <a href="/" class="home-link">&larr; Back home</a>
-</div>
+<header class="topnav" id="topnav">
+  <div class="topnav-inner">
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v14</span></a>
+    <div class="topnav-right">
+      <a href="/" class="home-link">&larr; Back home</a>
+    </div>
+  </div>
+</header>
 
-<div class="wrap">
+<section class="hero">
+  <div class="eyebrow"><span class="dot"></span>Invitation only &middot; <span id="eyebrowSpots">100 of 100</span> spots remaining</div>
   <h1 class="heading">Apply for invitation</h1>
   <p class="subhead">Hand-picked customers only. We review every application individually and respond within 48 hours. We accept fewer than 1 in 10.</p>
+</section>
+
+<div class="wrap">
 
   <div class="progress" aria-hidden="true">
     <div class="progress-dot active" id="dot1"></div>
@@ -669,6 +707,11 @@
     Questions? <a href="mailto:hello@webhosting197.com">hello@webhosting197.com</a>
   </div>
 </div>
+
+<footer class="foot">
+  <div>webhosting197.com &copy; 2026</div>
+  <div class="foot-tag">Another SlatePress company</div>
+</footer>
 
 <script>
 // v11: Google Places API key. Drop your key here once provisioned at
@@ -1484,6 +1527,27 @@ window.GOOGLE_PLACES_API_KEY = '';
 
   // Kick off the loader on DOM ready (script is at end of body so DOM exists)
   gpLoadGoogleMaps();
+
+  /* ---------- v14: live founder count for eyebrow scarcity (matches splash) ---------- */
+  (function(){
+    var ebSpots = byId('eyebrowSpots');
+    if (!ebSpots) return;
+    fetch('/api/founder-coupon').then(function(r){return r.json();}).then(function(j){
+      var claimed = (typeof j.claimedCount === 'number') ? j.claimedCount : 0;
+      var maxF = (typeof j.maxFounders === 'number') ? j.maxFounders : 100;
+      var remaining = Math.max(0, maxF - claimed);
+      ebSpots.textContent = remaining + ' of ' + maxF;
+    }).catch(function(){ /* leave default 100 of 100 */ });
+  })();
+
+  /* ---------- v14: topnav scroll-shadow border (matches splash) ---------- */
+  (function(){
+    var nav = byId('topnav');
+    if (!nav) return;
+    function onScroll(){ nav.classList.toggle('scrolled', window.scrollY > 4); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
 })();
 </script>
 
