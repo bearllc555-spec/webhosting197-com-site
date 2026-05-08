@@ -114,6 +114,28 @@
   .char-counter.near-limit{color:var(--amber)}
   .char-counter.at-limit{color:var(--red);font-weight:600}
 
+  /* v12 - block-level checkbox below an input (used for "I don't have a website yet") */
+  .field-checkbox{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px 14px;background:var(--bg);border:1px solid var(--rule);border-radius:8px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;user-select:none;transition:border-color .12s,background .12s}
+  .field-checkbox:hover{border-color:var(--rule-strong)}
+  .field-checkbox input{margin:0;flex-shrink:0;width:16px;height:16px;cursor:pointer}
+  .field-checkbox:has(input:checked){background:var(--blue-soft);border-color:var(--blue);color:var(--blue-deep);font-weight:600}
+
+  /* v12 - service-catalog grid + custom-add row */
+  .service-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;min-height:40px}
+  .service-grid-empty{color:var(--slate-light);font-size:13px;font-style:italic;padding:8px 0}
+  .service-pill{position:relative;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--rule-strong);border-radius:8px;background:#fff;font-size:13.5px;color:var(--ink-soft);cursor:pointer;user-select:none;transition:border-color .12s,background .12s,color .12s}
+  .service-pill:hover{border-color:var(--slate)}
+  .service-pill input{position:absolute;opacity:0;pointer-events:none}
+  .service-pill:has(input:checked){background:var(--blue-soft);border-color:var(--blue);color:var(--blue-deep);font-weight:600}
+  .service-pill .pill-x{display:none;font-size:14px;line-height:1;font-weight:700;opacity:.55;margin-left:2px}
+  .service-pill.custom .pill-x{display:inline}
+  .service-pill.custom:hover .pill-x{opacity:1}
+  .service-add-row{display:flex;gap:8px;margin-top:10px;align-items:stretch}
+  .service-add-row input{flex:1;padding:9px 13px;border:1px solid var(--rule-strong);border-radius:9px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;outline:0;transition:border-color .15s,box-shadow .15s}
+  .service-add-row input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+  .btn-tiny{padding:9px 14px;font-size:13px;font-weight:600;border-radius:9px;border:1px solid var(--rule-strong);background:#fff;color:var(--ink-soft);cursor:pointer;font-family:inherit;white-space:nowrap;transition:border-color .12s,background .12s,color .12s}
+  .btn-tiny:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+
   /* Service-towns autocomplete (Google Places, v11) */
   .gp-autocomplete{position:relative}
   .gp-suggestions{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--rule-strong);border-top:0;border-radius:0 0 9px 9px;box-shadow:0 8px 24px rgba(15,23,42,.08);max-height:240px;overflow-y:auto;z-index:5;margin-top:-1px}
@@ -156,7 +178,7 @@
 <body>
 
 <div class="topnav">
-  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v11</span></a>
+  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v12</span></a>
   <a href="/" class="home-link">&larr; Back home</a>
 </div>
 
@@ -366,11 +388,10 @@
       <div class="field">
         <label for="websiteUrl">Current website URL</label>
         <input id="websiteUrl" type="url" placeholder="https://yourbusiness.com" autocomplete="url">
-        <div class="field-help">
-          <label class="checkbox-inline">
-            <input type="checkbox" id="noWebsite"> I don&rsquo;t have a website yet
-          </label>
-        </div>
+        <label class="field-checkbox" for="noWebsite">
+          <input type="checkbox" id="noWebsite">
+          <span>I don&rsquo;t have a website yet</span>
+        </label>
       </div>
 
       <div class="field">
@@ -441,9 +462,15 @@
 
     <div class="step-fields">
       <div class="field">
-        <label for="topServices">Top 3&ndash;5 services or product categories</label>
-        <textarea id="topServices" rows="4" placeholder="One per line - e.g.,&#10;Emergency repair&#10;Water heater install&#10;Drain cleaning&#10;Bathroom remodel" required></textarea>
-        <div class="field-help">List the services you actually sell most. We use these to populate your demo site.</div>
+        <label>Top services or product categories</label>
+        <div class="service-grid" id="serviceGrid">
+          <span class="service-grid-empty" id="serviceGridEmpty">Pick your industry in step 2 first.</span>
+        </div>
+        <div class="service-add-row">
+          <input id="serviceAddInput" type="text" placeholder="+ Add a custom service" autocomplete="off">
+          <button type="button" id="serviceAddBtn" class="btn-tiny">Add</button>
+        </div>
+        <div class="field-help">Pick all that apply. We use these to populate your demo site.</div>
       </div>
 
       <div class="field">
@@ -459,13 +486,13 @@
       </div>
 
       <div class="field">
-        <label for="serviceTowns">Service area towns / cities</label>
+        <label for="serviceTowns">Service area towns</label>
         <div class="gp-autocomplete">
-          <input id="serviceTowns" type="text" placeholder="Type a city name &mdash; we'll suggest matches" autocomplete="off" required>
+          <input id="serviceTowns" type="text" placeholder="Little Falls, Clifton, Cedar Grove" autocomplete="off" required>
           <div id="gpSuggestions" class="gp-suggestions" hidden role="listbox"></div>
         </div>
         <div id="gpChips" class="gp-chips"></div>
-        <div class="field-help" id="gpHelpText">Type a city, pick from the suggestions. Add as many as apply.</div>
+        <div class="field-help" id="gpHelpText">Just the town names. We already have your state from step 2.</div>
       </div>
 
       <div class="field">
@@ -667,6 +694,79 @@ window.GOOGLE_PLACES_API_KEY = '';
   var verifiedSummary = byId('verifiedSummary');
   var step1Error = byId('step1-error');
   var step1VerifyError = byId('step1-verify-error');
+
+  // v12 - service catalog keyed by industry. When industry is set in Step 2,
+  // Step 4 dynamically populates the service grid below with checkbox pills.
+  // "Other" yields an empty grid; user must add custom services via the + Add row.
+  var SERVICE_CATALOG = {
+    'Roofing': ['Roof repair','Roof replacement','New roof install','Storm damage','Gutter install','Gutter cleaning','Roof inspection','Skylight install','Insulation','Solar prep','Commercial roofing','Emergency tarp'],
+    'Personal Injury Law': ['Auto accidents','Truck accidents','Motorcycle accidents','Slip and fall','Medical malpractice','Workers comp','Wrongful death','Product liability','Dog bites','Premises liability','Nursing home abuse','Catastrophic injury'],
+    'HVAC': ['AC repair','AC install','Furnace repair','Furnace install','Heat pump','Ductwork','Indoor air quality','Maintenance plans','Emergency service','Mini-split install','Thermostat install','Commercial HVAC'],
+    'Plastic Surgery / Med Spa': ['Botox','Fillers','Laser hair removal','CoolSculpting','Microneedling','Chemical peels','Breast augmentation','Liposuction','Rhinoplasty','Facelift','Tummy tuck','IV therapy'],
+    'Senior Care / Home Care': ['Personal care','Companion care','Dementia care','Respite care','24-hour care','Meal prep','Medication reminders','Transportation','Live-in care','Hospice support','Post-surgery care','Errands and shopping'],
+    'DUI / Criminal Defense': ['DUI defense','DWI defense','Drug charges','Assault charges','Domestic violence','Theft','Gun charges','Probation violations','Federal crimes','Juvenile defense','White collar','Expungement'],
+    'Plumbing': ['Emergency repair','Drain cleaning','Water heater install','Bathroom remodel','Sewer line','Sump pump','Water softener','Gas line','Backflow prevention','Toilet repair','Faucet install','Pipe repair'],
+    'Dental Practice': ['General cleanings','Cosmetic dentistry','Veneers','Implants','Invisalign','Whitening','Crowns and bridges','Root canals','Extractions','Pediatric dentistry','Emergency dental','Sleep apnea'],
+    'Landscaping / Lawn Care': ['Lawn mowing','Landscape design','Hardscape install','Tree service','Mulching','Sod install','Sprinkler install','Snow removal','Leaf cleanup','Fertilization','Pest control','Outdoor lighting'],
+    'Auto Repair': ['Oil change','Brake service','Engine repair','Transmission repair','AC service','Tire service','Alignment','Diagnostics','Inspection','Battery service','Suspension','Electrical work'],
+    'Chiropractor': ['Spinal adjustment','Auto injury','Sports injury','Massage therapy','Decompression','Cold laser','Acupuncture','Posture correction','Pediatric chiro','Pregnancy chiro','Wellness plans','Workers comp injury'],
+    'Real Estate': ['Buyer representation','Seller representation','Luxury homes','New construction','Investment properties','First-time buyers','Relocation','Land sales','Commercial','Property management','Rentals','Foreclosures'],
+    'Financial Advisor': ['Retirement planning','Investment management','Estate planning','Tax strategy','College savings','401k rollover','Insurance planning','Business planning','Wealth management','Annuities','Risk assessment','Debt planning'],
+    'Wedding Venue': ['Ceremony space','Reception space','Catering','Bar service','In-house decor','Lodging','Bridal suite','Outdoor ceremony','Day-of coordinator','Rehearsal dinner','Photo locations','Off-site catering'],
+    'Fitness Studio': ['Personal training','Group classes','Yoga','Pilates','CrossFit','Spin','HIIT','Boxing','Strength training','Nutrition coaching','Online classes','Corporate wellness'],
+    'Daycare / Preschool': ['Infant care','Toddler program','Pre-K','Before/after school','Summer camp','Half-day program','Full-day program','Drop-in care','Special needs','Bilingual program','Montessori','Faith-based'],
+    'Pet Grooming / Boarding': ['Bath and brush','Full grooming','Nail trim','Boarding','Day care','Cat grooming','De-shedding','Teeth brushing','Hand stripping','Mobile grooming','Specialty cuts','Puppy intro'],
+    'Restaurant': ['Dine-in','Takeout','Delivery','Catering','Private events','Brunch','Happy hour','Bar service','Outdoor seating','Reservations','Gift cards','Online ordering'],
+    'Insurance Agent': ['Auto insurance','Home insurance','Life insurance','Health insurance','Business insurance','Workers comp','Umbrella policies','Renters insurance','Boat / RV','Disability insurance','Annuities','Medicare supplement'],
+    'Multi-service (HVAC + Plumbing + Electrical)': ['HVAC repair','HVAC install','Plumbing repair','Drain cleaning','Water heater','Electrical repair','Panel upgrade','Lighting install','Generator install','Smart home','Maintenance plans','Emergency service'],
+    'Other': []
+  };
+
+  function makeServicePill(label, isCustom, preChecked) {
+    var pill = document.createElement('label');
+    pill.className = 'service-pill' + (isCustom ? ' custom' : '');
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = 'serviceCheck';
+    input.value = label;
+    if (preChecked) input.checked = true;
+    var span = document.createElement('span');
+    span.textContent = label;
+    pill.appendChild(input);
+    pill.appendChild(span);
+    if (isCustom) {
+      var x = document.createElement('span');
+      x.className = 'pill-x';
+      x.textContent = '×';
+      x.setAttribute('aria-label', 'Remove');
+      x.addEventListener('mousedown', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        pill.remove();
+      });
+      pill.appendChild(x);
+    }
+    return pill;
+  }
+
+  function populateServiceGrid(industry) {
+    var grid = document.getElementById('serviceGrid');
+    if (!grid) return;
+    var existingCustoms = Array.from(grid.querySelectorAll('.service-pill.custom'));
+    grid.innerHTML = '';
+    var services = SERVICE_CATALOG[industry] || [];
+    if (services.length === 0 && existingCustoms.length === 0) {
+      var empty = document.createElement('span');
+      empty.className = 'service-grid-empty';
+      empty.textContent = (industry === 'Other')
+        ? 'Add your own services using the + Add row below.'
+        : 'Pick your industry in step 2 first.';
+      grid.appendChild(empty);
+      return;
+    }
+    services.forEach(function(s){ grid.appendChild(makeServicePill(s, false, false)); });
+    existingCustoms.forEach(function(p){ grid.appendChild(p); });
+  }
 
   // verifiedToken stored in memory; the rest of the form (v05+) will pass it
   // along on submit so the server-signed proof of identity verification accompanies
@@ -925,6 +1025,9 @@ window.GOOGLE_PLACES_API_KEY = '';
       state.hqState = hqState;
       state.serviceAreaDepth = serviceAreaDepth;
 
+      // v12 - populate Step 4 service grid based on industry choice
+      populateServiceGrid(industry);
+
       markStepDone(2);
       activateStep(3);
     });
@@ -989,12 +1092,34 @@ window.GOOGLE_PLACES_API_KEY = '';
   }
 
   /* ---------- Step 4 — Services + offering ---------- */
+  // Custom-service add row
+  var serviceAddBtn = byId('serviceAddBtn');
+  var serviceAddInput = byId('serviceAddInput');
+  function addCustomService() {
+    var v = (serviceAddInput.value || '').trim();
+    if (!v) return;
+    var grid = byId('serviceGrid');
+    if (!grid) return;
+    var emptyEl = grid.querySelector('.service-grid-empty');
+    if (emptyEl) emptyEl.remove();
+    grid.appendChild(makeServicePill(v, true, true));
+    serviceAddInput.value = '';
+    serviceAddInput.focus();
+  }
+  if (serviceAddBtn) serviceAddBtn.addEventListener('click', addCustomService);
+  if (serviceAddInput) {
+    serviceAddInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); addCustomService(); }
+    });
+  }
+
   var step4Btn = byId('step4ContinueBtn');
   if (step4Btn) {
     step4Btn.addEventListener('click', function(){
       var step4Error = byId('step4-error');
       clearError(step4Error);
-      var topServices = (byId('topServices').value || '').trim();
+      var checkedServices = Array.from(document.querySelectorAll('input[name="serviceCheck"]:checked')).map(function(c){ return c.value; });
+      var topServices = checkedServices.join(', ');
       var ticketSize = (byId('ticketSize').value || '').trim();
       // Service towns: prefer chips (v11) but fall back to raw input value (pre-v11 / no-key fallback)
       var serviceTowns;
@@ -1006,9 +1131,7 @@ window.GOOGLE_PLACES_API_KEY = '';
       var seasonality = (byId('seasonality').value || '').trim();
       var topRevenueServices = (byId('topRevenueServices').value || '').trim();
 
-      if (!topServices) { showError(step4Error, 'List your top services (one per line).'); return; }
-      var serviceLines = topServices.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length;});
-      if (serviceLines.length < 1) { showError(step4Error, 'List at least one service.'); return; }
+      if (checkedServices.length < 1) { showError(step4Error, 'Pick at least one service (or add a custom one with the + Add row).'); return; }
       if (!ticketSize) { showError(step4Error, 'What\u2019s your average ticket size?'); return; }
       if (!serviceTowns) { showError(step4Error, 'List the towns/cities where you work.'); return; }
       if (!seasonality) { showError(step4Error, 'Pick a seasonality option.'); return; }
@@ -1346,9 +1469,7 @@ window.GOOGLE_PLACES_API_KEY = '';
   function gpLoadGoogleMaps() {
     var key = window.GOOGLE_PLACES_API_KEY || '';
     if (!key) {
-      // No key - keep plain text input, update help text to set expectation
-      if (gpInput) gpInput.placeholder = 'e.g., Clifton NJ, Passaic NJ, Wayne NJ';
-      if (gpHelpText) gpHelpText.textContent = 'Comma-separated list of towns where you actively work.';
+      // No key - keep plain text input. Placeholder + help text are already set in markup.
       gpInitInputHandlers(); // safe no-op (autocomplete svc will be null)
       return;
     }
