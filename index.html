@@ -121,7 +121,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .pricing-side .apps-badges{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
 .pricing-card{background:var(--bg);border:1px solid var(--rule-strong);border-radius:20px;padding:48px;max-width:520px;margin:0 auto;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.02),0 8px 32px rgba(0,0,0,.04)}
 .pricing-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--blue);background:var(--blue-soft);padding:.32rem .72rem;border-radius:999px;margin-bottom:24px}
-.price-was-big{font-size:32px;font-weight:600;color:var(--slate);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:#B0B0B6;letter-spacing:-.025em;line-height:1;margin-bottom:8px;display:inline-block}
+
 .founder-remaining{font-variant-numeric:tabular-nums;font-weight:700;color:var(--blue)}
 .founder-bar{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;margin-bottom:18px;max-width:280px}
 .stripe-cta{display:inline-flex;align-items:center;gap:.5rem;width:100%;justify-content:center;padding:.95rem 1.4rem;font-size:15.5px;font-weight:600;border-radius:10px;text-decoration:none;margin-bottom:8px;box-shadow:0 1px 2px rgba(37,99,235,.18),0 4px 12px rgba(37,99,235,.16)}
@@ -291,20 +291,18 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   <div class="pricing-grid">
   <div class="pricing-card">
     <span class="pricing-tag">lifetime</span>
-    <div class="price-was-big">$197</div>
     <div class="price-display">
       <span class="price-currency">$</span>
-      <span class="price-amount" id="priceAmount">147</span>
+      <span class="price-amount" id="priceAmount">197</span>
       <span class="price-suffix">once</span>
     </div>
-    <p class="price-detail">Founder pricing &middot; <span class="founder-remaining" id="founderRemaining">50</span> of 50 spots left.</p>
+    <p class="price-detail">Founder applications open &middot; <span class="founder-remaining" id="founderRemaining">50</span> of 50 spots remaining.</p>
     <div class="founder-bar" aria-hidden="true"><div class="founder-bar-fill" id="founderBarFill"></div></div>
-    <p class="price-aftermath">Standard price after the first 50: $197.</p>
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
 
     <!-- Stripe paid-founder CTA: locks in current climbing-price founder slot -->
     <a id="stripeCheckout" class="btn btn-primary stripe-cta" href="https://buy.stripe.com/9B628t0oA6kp4ZP8nae3e00" target="_blank" rel="noopener">
-      Reserve now &middot; pay $<span id="ctaPrice">147</span>
+      Reserve now &middot; pay $<span id="ctaPrice">197</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
     </a>
     <div class="cta-divider" aria-hidden="true">or just get notified</div>
@@ -410,12 +408,12 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 <section class="faq" id="faq">
   <h2>Questions</h2>
   <details class="faq-item">
-    <summary><span>What does $147 include?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <summary><span>What does $197 include?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
     <p>One website, hosted forever on a globally distributed edge network, with SSL renewing automatically. AI builds the initial site to your spec and keeps the content fresh as your business evolves. Domain registration is separate (~$15/yr at any registrar). No upsells, no monthly fees.</p>
   </details>
   <details class="faq-item">
-    <summary><span>Why is the founder price $147 if you&rsquo;re called webhosting197?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
-    <p>$197 is the standard lifetime price (right there in the name). Founders &mdash; the first 50 signups &mdash; lock in $147 instead, $50 off, for life. Once the 50 spots fill, the price reverts to $197.</p>
+    <summary><span>How do I get an invitation?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <p>Apply through the form above with your business details. We review every application individually and respond within 48 hours either way. Most applicants don&rsquo;t get in &mdash; we hand-pick for fit. The first 50 founders lock in their spot for life.</p>
   </details>
   <details class="faq-item">
     <summary><span>Can I use my own domain?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
@@ -522,18 +520,9 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     function run(){
       if(fired)return;fired=true;
       amt.classList.add('counting');
-      // Phase 1: 999 -> 197 (heavy easeOutQuint)
+      // Phase 1: 999 -> 197 (heavy easeOutQuint), then flash to anchor the brand price.
       tickPhase(999,197,1920,function(p){return 1-Math.pow(1-p,5);},function(){
-        // Phase 2: flash 197 (brand anchor)
-        flashOnce(function(){
-          // Phase 3: 197 -> 147 slow tick (easeOutQuad)
-          tickPhase(197,147,2000,function(p){return 1-Math.pow(1-p,2);},function(){
-            // Phase 4: flash 147 (founder price) + confetti burst while blue
-            var rect=amt.getBoundingClientRect();
-            confettiBurst(rect.left+rect.width/2,rect.top+rect.height/2);
-            flashOnce();
-          });
-        });
+        flashOnce();
       });
     }
     if('IntersectionObserver' in window){
