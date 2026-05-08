@@ -114,6 +114,19 @@
   .char-counter.near-limit{color:var(--amber)}
   .char-counter.at-limit{color:var(--red);font-weight:600}
 
+  /* Service-towns autocomplete (Google Places, v11) */
+  .gp-autocomplete{position:relative}
+  .gp-suggestions{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--rule-strong);border-top:0;border-radius:0 0 9px 9px;box-shadow:0 8px 24px rgba(15,23,42,.08);max-height:240px;overflow-y:auto;z-index:5;margin-top:-1px}
+  .gp-suggestions[hidden]{display:none}
+  .gp-suggestion{padding:10px 13px;font-size:14px;color:var(--ink-soft);cursor:pointer;border-bottom:1px solid var(--rule)}
+  .gp-suggestion:last-child{border-bottom:0}
+  .gp-suggestion:hover,.gp-suggestion.gp-active{background:var(--blue-soft);color:var(--blue-deep)}
+  .gp-suggestion strong{color:var(--ink);font-weight:600}
+  .gp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .gp-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--blue-soft);color:var(--blue-deep);border-radius:14px;font-size:12.5px;font-weight:600}
+  .gp-chip button{appearance:none;border:0;background:transparent;color:var(--blue-deep);font-size:14px;cursor:pointer;padding:0;line-height:1;font-weight:700;opacity:.7}
+  .gp-chip button:hover{opacity:1}
+
   /* Step 6 - submit + success state */
   .legal-attestation{padding:14px 16px;background:var(--bg);border:1px solid var(--rule);border-radius:9px;margin-top:6px}
   .legal-attestation .checkbox-inline{margin-top:0;align-items:flex-start;line-height:1.5;font-size:12.5px;color:var(--ink-soft)}
@@ -143,7 +156,7 @@
 <body>
 
 <div class="topnav">
-  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v10</span></a>
+  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v11</span></a>
   <a href="/" class="home-link">&larr; Back home</a>
 </div>
 
@@ -447,9 +460,12 @@
 
       <div class="field">
         <label for="serviceTowns">Service area towns / cities</label>
-        <input id="serviceTowns" type="text" placeholder="e.g., Clifton NJ, Passaic NJ, Wayne NJ" autocomplete="off" required>
-        <div class="field-help">Comma-separated list of towns where you actively work. Used for hyper-local SEO targeting.</div>
-        <!-- Polish layer (v11): swap in Google Places autocomplete here when API key is provisioned. Element keeps the same id. -->
+        <div class="gp-autocomplete">
+          <input id="serviceTowns" type="text" placeholder="Type a city name &mdash; we'll suggest matches" autocomplete="off" required>
+          <div id="gpSuggestions" class="gp-suggestions" hidden role="listbox"></div>
+        </div>
+        <div id="gpChips" class="gp-chips"></div>
+        <div class="field-help" id="gpHelpText">Type a city, pick from the suggestions. Add as many as apply.</div>
       </div>
 
       <div class="field">
@@ -628,6 +644,11 @@
 </div>
 
 <script>
+// v11: Google Places API key. Drop your key here once provisioned at
+// https://console.cloud.google.com/google/maps-apis/credentials
+// (Enable: Maps JavaScript API + Places API. Restrict to webhosting197.com referrer.)
+// If empty, the service-towns input gracefully falls back to plain text.
+window.GOOGLE_PLACES_API_KEY = '';
 (function(){
   var byId = function(id){ return document.getElementById(id); };
 
@@ -975,7 +996,13 @@
       clearError(step4Error);
       var topServices = (byId('topServices').value || '').trim();
       var ticketSize = (byId('ticketSize').value || '').trim();
-      var serviceTowns = (byId('serviceTowns').value || '').trim();
+      // Service towns: prefer chips (v11) but fall back to raw input value (pre-v11 / no-key fallback)
+      var serviceTowns;
+      if (window._gpSelectedCities && window._gpSelectedCities.length > 0) {
+        serviceTowns = window._gpSelectedCities.join(', ');
+      } else {
+        serviceTowns = (byId('serviceTowns').value || '').trim();
+      }
       var seasonality = (byId('seasonality').value || '').trim();
       var topRevenueServices = (byId('topRevenueServices').value || '').trim();
 
@@ -1177,6 +1204,165 @@
       }
     });
   }
+
+  /* ---------- v11: Google Places autocomplete for service-area towns ---------- */
+  // Multi-city chip input. Plain text fallback if API key is missing.
+  window._gpSelectedCities = [];
+
+  var gpInput = byId('serviceTowns');
+  var gpSuggestions = byId('gpSuggestions');
+  var gpChips = byId('gpChips');
+  var gpHelpText = byId('gpHelpText');
+  var gpDebounceTimer = null;
+  var gpAutocompleteSvc = null;
+  var gpSessionToken = null;
+
+  function gpRenderChips() {
+    if (!gpChips) return;
+    gpChips.innerHTML = '';
+    window._gpSelectedCities.forEach(function(city, idx){
+      var chip = document.createElement('span');
+      chip.className = 'gp-chip';
+      chip.innerHTML = '<span></span><button type="button" aria-label="Remove">&times;</button>';
+      chip.querySelector('span').textContent = city;
+      chip.querySelector('button').addEventListener('click', function(){
+        window._gpSelectedCities.splice(idx, 1);
+        gpRenderChips();
+      });
+      gpChips.appendChild(chip);
+    });
+  }
+
+  function gpClearSuggestions() {
+    if (!gpSuggestions) return;
+    gpSuggestions.innerHTML = '';
+    gpSuggestions.hidden = true;
+  }
+
+  function gpRenderSuggestions(predictions) {
+    if (!gpSuggestions) return;
+    gpSuggestions.innerHTML = '';
+    if (!predictions || predictions.length === 0) {
+      gpClearSuggestions();
+      return;
+    }
+    predictions.forEach(function(p){
+      var item = document.createElement('div');
+      item.className = 'gp-suggestion';
+      item.setAttribute('role', 'option');
+      // p.structured_formatting.main_text + secondary_text where available
+      var main = (p.structured_formatting && p.structured_formatting.main_text) || p.description;
+      var sec = (p.structured_formatting && p.structured_formatting.secondary_text) || '';
+      item.innerHTML = '<strong></strong> <span></span>';
+      item.querySelector('strong').textContent = main;
+      item.querySelector('span').textContent = sec ? ' - ' + sec : '';
+      item.addEventListener('mousedown', function(e){
+        e.preventDefault(); // keep focus on input
+        gpSelectCity(main, sec);
+      });
+      gpSuggestions.appendChild(item);
+    });
+    gpSuggestions.hidden = false;
+  }
+
+  function gpSelectCity(main, sec) {
+    // Build "Clifton, NJ" style label (city + state abbrev if we can extract it)
+    var label = main;
+    if (sec) {
+      // sec format: "Passaic County, NJ, USA" - extract state abbreviation
+      var parts = sec.split(',').map(function(s){return s.trim();});
+      // Prefer 2-letter code
+      var stateAbbrev = '';
+      for (var i = 0; i < parts.length; i++) {
+        if (/^[A-Z]{2}$/.test(parts[i])) { stateAbbrev = parts[i]; break; }
+      }
+      if (stateAbbrev) label = main + ', ' + stateAbbrev;
+    }
+    if (window._gpSelectedCities.indexOf(label) === -1) {
+      window._gpSelectedCities.push(label);
+      gpRenderChips();
+    }
+    if (gpInput) gpInput.value = '';
+    gpClearSuggestions();
+    if (gpInput) gpInput.focus();
+  }
+
+  function gpFetchPredictions(query) {
+    if (!gpAutocompleteSvc || !query || query.length < 2) { gpClearSuggestions(); return; }
+    if (!gpSessionToken && window.google && window.google.maps && window.google.maps.places) {
+      gpSessionToken = new window.google.maps.places.AutocompleteSessionToken();
+    }
+    gpAutocompleteSvc.getPlacePredictions({
+      input: query,
+      types: ['(cities)'],
+      componentRestrictions: { country: 'us' },
+      sessionToken: gpSessionToken
+    }, function(predictions, status){
+      if (status !== 'OK' || !predictions) { gpClearSuggestions(); return; }
+      gpRenderPredictions(predictions);
+    });
+  }
+
+  // alias - readability
+  function gpRenderPredictions(p) { gpRenderSuggestions(p); }
+
+  function gpInitInputHandlers() {
+    if (!gpInput) return;
+    gpInput.addEventListener('input', function(){
+      var q = (gpInput.value || '').trim();
+      if (gpDebounceTimer) clearTimeout(gpDebounceTimer);
+      if (!gpAutocompleteSvc) {
+        // No Places API loaded - fallback: do nothing, plain text capture handles it
+        return;
+      }
+      gpDebounceTimer = setTimeout(function(){ gpFetchPredictions(q); }, 250);
+    });
+    gpInput.addEventListener('blur', function(){
+      // delay close so click handlers on suggestions can fire
+      setTimeout(gpClearSuggestions, 200);
+    });
+    // Pressing Enter in the input should NOT submit; should pick first suggestion if any
+    gpInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var first = gpSuggestions ? gpSuggestions.querySelector('.gp-suggestion') : null;
+        if (first) first.dispatchEvent(new Event('mousedown'));
+      }
+    });
+  }
+
+  function gpInitWhenReady() {
+    if (!window.google || !window.google.maps || !window.google.maps.places) return;
+    try {
+      gpAutocompleteSvc = new window.google.maps.places.AutocompleteService();
+      gpInitInputHandlers();
+      if (gpHelpText) gpHelpText.textContent = 'Type a city, pick from the suggestions. Add as many as apply.';
+    } catch (e) {
+      // Fallback to plain input if Places init fails
+      gpAutocompleteSvc = null;
+    }
+  }
+
+  function gpLoadGoogleMaps() {
+    var key = window.GOOGLE_PLACES_API_KEY || '';
+    if (!key) {
+      // No key - keep plain text input, update help text to set expectation
+      if (gpInput) gpInput.placeholder = 'e.g., Clifton NJ, Passaic NJ, Wayne NJ';
+      if (gpHelpText) gpHelpText.textContent = 'Comma-separated list of towns where you actively work.';
+      gpInitInputHandlers(); // safe no-op (autocomplete svc will be null)
+      return;
+    }
+    // Key present - load Maps JS with Places library
+    var s = document.createElement('script');
+    s.async = true;
+    s.defer = true;
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&libraries=places&callback=__gpReady';
+    window.__gpReady = gpInitWhenReady;
+    document.head.appendChild(s);
+  }
+
+  // Kick off the loader on DOM ready (script is at end of body so DOM exists)
+  gpLoadGoogleMaps();
 })();
 </script>
 
