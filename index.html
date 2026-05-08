@@ -108,17 +108,9 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .pricing-section{padding:64px 32px 24px;max-width:var(--max);margin:0 auto}
 .pricing-grid{display:grid;grid-template-columns:1fr;gap:48px;align-items:start}
 @media(min-width:920px){
-  .pricing-grid{grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:72px;align-items:start;justify-content:center}
-  .pricing-card{margin:0 !important;width:100%}
+  .pricing-grid{grid-template-columns:minmax(0,520px);justify-content:center}
 }
-.pricing-side{display:flex;flex-direction:column;align-items:center;text-align:center;max-width:480px;margin:0 auto}
-@media(max-width:919px){.pricing-side{padding-top:48px;margin-top:8px;border-top:1px solid var(--rule)}}
-.pricing-side .apps-tagline{font-size:clamp(22px,2.4vw,28px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin-bottom:12px;line-height:1.15}
-.pricing-side .apps-sub{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin:0 auto 28px;max-width:42ch}
-.pricing-side .apps-sub strong{color:var(--ink);font-weight:600}
-.pricing-side .phone-mock{margin:0 0 28px}
-.pricing-side .apps-eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:12px}
-.pricing-side .apps-badges{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+
 .pricing-card{background:var(--bg);border:1px solid var(--rule-strong);border-radius:20px;padding:48px;max-width:520px;margin:0 auto;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.02),0 8px 32px rgba(0,0,0,.04)}
 .pricing-tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--blue);background:var(--blue-soft);padding:.32rem .72rem;border-radius:999px;margin-bottom:24px}
 
@@ -190,39 +182,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .detail-item p{font-size:14.5px;color:var(--ink-soft);line-height:1.6}
 @media(max-width:760px){.details-grid{grid-template-columns:1fr;gap:28px}}
 
-/* App store badges + Designed-for-mobile callout + phone mock */
-.apps-tagline{font-size:clamp(24px,2.8vw,34px);font-weight:700;letter-spacing:-.025em;color:var(--ink);margin-bottom:14px;line-height:1.12}
-.apps-tagline em{font-style:normal;color:var(--blue);font-weight:700}
-.apps-sub{font-size:15.5px;color:var(--ink-soft);line-height:1.6;margin:0 auto 32px;max-width:54ch}
-.apps-sub strong{color:var(--ink);font-weight:600}
-.apps-eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:14px}
-.apps-badges{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
-.apps-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;background:#1C1B1F;color:#fff;border-radius:10px;text-decoration:none;transition:transform .15s,box-shadow .15s}
-.apps-badge:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(28,27,31,.18)}
-.apps-badge .badge-icon{width:24px;height:24px;flex-shrink:0}
-.apps-badge .badge-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;text-align:left}
-.apps-badge .badge-line1{font-size:10.5px;font-weight:400;opacity:.85}
-.apps-badge .badge-line2{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-top:2px}
-@media(max-width:520px){.apps-badges{gap:10px}.apps-badge{padding:9px 14px}}
 
-/* Phone mock - illustrates web UI = mobile UI */
-.phone-mock{display:flex;justify-content:center;margin:8px 0 36px;perspective:1200px}
-.phone-frame{position:relative;width:268px;height:545px;background:#1C1B1F;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(28,27,31,.16),0 8px 18px rgba(28,27,31,.08)}
-.phone-notch{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:96px;height:28px;background:#1C1B1F;border-radius:18px;z-index:2}
-.phone-screen{width:100%;height:100%;background:var(--bg);border-radius:32px;padding:54px 22px 30px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;text-align:left;overflow:hidden}
-.phone-brand{font-size:17px;font-weight:800;letter-spacing:-.04em;color:var(--ink);line-height:1}
-.phone-brand .b{color:var(--blue)}
-.phone-card{background:var(--bg-card);border:1px solid var(--rule-strong);border-radius:12px;padding:14px}
-.phone-card-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);margin-bottom:6px}
-.phone-card-value{font-size:24px;font-weight:700;letter-spacing:-.025em;color:var(--ink);display:flex;align-items:baseline;gap:0}
-.phone-card-value .small{font-size:13px;font-weight:500;color:var(--slate);margin-left:4px}
-.phone-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
-.phone-row{display:flex;align-items:center;gap:11px;font-size:13.5px;color:var(--ink);font-weight:500;padding:10px 12px;background:var(--bg);border:1px solid var(--rule);border-radius:10px}
-.phone-row-icon{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;background:var(--blue-soft);color:var(--blue);border-radius:6px;flex-shrink:0}
-.phone-row-icon svg{width:13px;height:13px}
-.phone-row-text{flex:1}
-.phone-row-chev{color:var(--slate);font-size:14px}
-.phone-home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:118px;height:4px;background:rgba(255,255,255,.42);border-radius:2px}
 
 /* FAQ - Mercury-style collapsible accordion */
 .faq{padding:24px 32px 96px;max-width:760px;margin:0 auto}
@@ -357,33 +317,6 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       </div>
     </div>
   </div>
-  <aside class="pricing-side">
-<h2 class="apps-tagline">Designed for mobile, <em>on mobile.</em></h2>
-    <p class="apps-sub">The web app and the mobile app are <strong>the same UI</strong>. Same nav, same buttons, same flows. Use it on your laptop and you&rsquo;re already trained for the phone &mdash; pick up either, no new learning curve.</p>
-    <div class="phone-mock" aria-hidden="true">
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <div class="phone-brand">/webhosting<span class="b">197</span></div>
-          <div class="phone-card">
-            <div class="phone-card-label">Founder price</div>
-            <div class="phone-card-value">$147<span class="small">once</span></div>
-          </div>
-          <div class="phone-list">
-            <div class="phone-row"><span class="phone-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg></span><span class="phone-row-text">Edit site with AI</span><span class="phone-row-chev">&rsaquo;</span></div>
-            <div class="phone-row"><span class="phone-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></span><span class="phone-row-text">Visitor stats</span><span class="phone-row-chev">&rsaquo;</span></div>
-            <div class="phone-row"><span class="phone-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.36.21.66.51.87.87a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09c-.61 0-1.16.36-1.51.87z"/></svg></span><span class="phone-row-text">Settings</span><span class="phone-row-chev">&rsaquo;</span></div>
-          </div>
-        </div>
-        <div class="phone-home"></div>
-      </div>
-    </div>
-    <div class="apps-eyebrow">Coming with launch &middot; 2026</div>
-    <div class="apps-badges">
-      <a href="#pricing" class="apps-badge" aria-label="Coming to the Apple App Store"><svg class="badge-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg><span class="badge-text"><span class="badge-line1">Coming soon to</span><span class="badge-line2">App Store</span></span></a>
-      <a href="#pricing" class="apps-badge" aria-label="Coming to Google Play"><svg class="badge-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="pgrad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00DCFF"/><stop offset="100%" stop-color="#00A0F4"/></linearGradient><linearGradient id="pgrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFCE00"/><stop offset="100%" stop-color="#FFB000"/></linearGradient><linearGradient id="pgrad3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF3A44"/><stop offset="100%" stop-color="#C31162"/></linearGradient><linearGradient id="pgrad4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00F076"/><stop offset="100%" stop-color="#00B373"/></linearGradient></defs><path d="M3.5 2.5v19l8-9.5z" fill="url(#pgrad4)"/><path d="M3.5 2.5l11.5 6L19 6.7c-.3-.3-.7-.4-1.2-.2L3.5 2.5z" fill="url(#pgrad1)"/><path d="M3.5 21.5l14.3-3.9c.5-.2.9-.3 1.2-.6L15 14.5z" fill="url(#pgrad3)"/><path d="M19 17c.5-.3.8-.7.8-1.2v-7.6c0-.5-.3-.9-.8-1.2L15 9.5l4 2.5z" fill="url(#pgrad2)"/></svg><span class="badge-text"><span class="badge-line1">Coming soon to</span><span class="badge-line2">Google Play</span></span></a>
-    </div>
-  </aside>
   </div>
 </section>
 
@@ -649,7 +582,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
         stripeBtn.href=STRIPE_LINK;
       }
     }).catch(function(){
-      // /api/founder-coupon unreachable — fail soft, leave button at default $147 splash text
+      // /api/founder-coupon unreachable — fail soft, leave button at default $197 splash text
       stripeBtn.href=STRIPE_LINK;
     });
   })();
