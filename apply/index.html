@@ -110,6 +110,10 @@
   @keyframes stepFadeIn{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @media(prefers-reduced-motion:reduce){.step.just-activated{animation:none}}
 
+  .char-counter{font-size:11.5px;color:var(--slate-light);text-align:right;margin-top:4px;font-feature-settings:"tnum"}
+  .char-counter.near-limit{color:var(--amber)}
+  .char-counter.at-limit{color:var(--red);font-weight:600}
+
   /* hidden by default; shown via JS state */
   [hidden]{display:none !important}
 </style>
@@ -117,7 +121,7 @@
 <body>
 
 <div class="topnav">
-  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v08</span></a>
+  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v09</span></a>
   <a href="/" class="home-link">&larr; Back home</a>
 </div>
 
@@ -398,25 +402,108 @@
   <!-- Step 4 - Services + offering -->
   <div class="step disabled" id="step4">
     <div class="step-title"><span class="step-num">4</span>Services &amp; offering</div>
-    <div class="step-sub">What you sell, ticket size, service area, seasonality.</div>
-    <div class="placeholder-fields">
-      <div class="placeholder-line">Top 3-5 services or product categories</div>
-      <div class="placeholder-line">Average ticket / job size &middot; Service area towns &middot; Seasonal patterns</div>
-      <div class="placeholder-line">Top 1-2 services that drive most revenue</div>
+    <div class="step-sub">What you sell, where you sell it, ticket size, seasonality.</div>
+
+    <div class="step-fields">
+      <div class="field">
+        <label for="topServices">Top 3&ndash;5 services or product categories</label>
+        <textarea id="topServices" rows="4" placeholder="One per line - e.g.,&#10;Emergency repair&#10;Water heater install&#10;Drain cleaning&#10;Bathroom remodel" required></textarea>
+        <div class="field-help">List the services you actually sell most. We use these to populate your demo site.</div>
+      </div>
+
+      <div class="field">
+        <label for="ticketSize">Average ticket / job size</label>
+        <select id="ticketSize" required>
+          <option value="">Select one&hellip;</option>
+          <option>Under $500</option>
+          <option>$500&ndash;$2K</option>
+          <option>$2K&ndash;$10K</option>
+          <option>$10K&ndash;$50K</option>
+          <option>$50K+</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="serviceTowns">Service area towns / cities</label>
+        <input id="serviceTowns" type="text" placeholder="e.g., Clifton NJ, Passaic NJ, Wayne NJ" autocomplete="off" required>
+        <div class="field-help">Comma-separated list of towns where you actively work. Used for hyper-local SEO targeting.</div>
+        <!-- Polish layer (v11): swap in Google Places autocomplete here when API key is provisioned. Element keeps the same id. -->
+      </div>
+
+      <div class="field">
+        <label for="seasonality">Seasonal patterns</label>
+        <select id="seasonality" required>
+          <option value="">Select one&hellip;</option>
+          <option>Year-round (no major seasonality)</option>
+          <option>Summer peak</option>
+          <option>Winter peak</option>
+          <option>Spring peak</option>
+          <option>Fall peak</option>
+          <option>Holiday-driven</option>
+          <option>Other (describe in step 5)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="topRevenueServices">Top 1&ndash;2 services that drive most revenue</label>
+        <input id="topRevenueServices" type="text" placeholder="e.g., bathroom remodels, water heater installs" required>
+        <div class="field-help">Helps us prioritize which calls to optimize for.</div>
+      </div>
+
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary" id="step4ContinueBtn">
+          Continue to step 5
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div id="step4-error" class="alert alert-error" hidden></div>
     </div>
-    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
   </div>
 
   <!-- Step 5 - Goals + voice -->
   <div class="step disabled" id="step5">
     <div class="step-title"><span class="step-num">5</span>Goals &amp; voice</div>
-    <div class="step-sub">What success looks like, who your ideal customer is, what to avoid.</div>
-    <div class="placeholder-fields">
-      <div class="placeholder-line">What&rsquo;s the most important thing visitors should know?</div>
-      <div class="placeholder-line">Biggest current challenge &middot; What success looks like in 12 months</div>
-      <div class="placeholder-line">Ideal customer profile &middot; Anything you DON&rsquo;T want</div>
+    <div class="step-sub">Five short reflections in your own words. Each ~250 characters.</div>
+
+    <div class="step-fields">
+      <div class="field">
+        <label for="visitorMustKnow">What's the most important thing visitors should know about your business?</label>
+        <textarea id="visitorMustKnow" rows="3" maxlength="250" required></textarea>
+        <div class="char-counter"><span data-char-count-for="visitorMustKnow">0</span> / 250</div>
+      </div>
+
+      <div class="field">
+        <label for="biggestChallenge">What's your biggest challenge with your current website (or lack of one)?</label>
+        <textarea id="biggestChallenge" rows="3" maxlength="250" required></textarea>
+        <div class="char-counter"><span data-char-count-for="biggestChallenge">0</span> / 250</div>
+      </div>
+
+      <div class="field">
+        <label for="successIn12Months">What does success look like 12 months from now?</label>
+        <textarea id="successIn12Months" rows="3" maxlength="250" required></textarea>
+        <div class="char-counter"><span data-char-count-for="successIn12Months">0</span> / 250</div>
+      </div>
+
+      <div class="field">
+        <label for="idealCustomer">What kind of customer do you want more of?</label>
+        <textarea id="idealCustomer" rows="3" maxlength="250" required></textarea>
+        <div class="char-counter"><span data-char-count-for="idealCustomer">0</span> / 250</div>
+      </div>
+
+      <div class="field">
+        <label for="dontWant">Anything you DON'T want? (tone, topics, design choices to avoid)</label>
+        <textarea id="dontWant" rows="3" maxlength="250" placeholder="Optional but helpful"></textarea>
+        <div class="char-counter"><span data-char-count-for="dontWant">0</span> / 250</div>
+      </div>
+
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary" id="step5ContinueBtn">
+          Continue to step 6
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div id="step5-error" class="alert alert-error" hidden></div>
     </div>
-    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
   </div>
 
   <!-- Step 6 - Logistics + submit -->
@@ -484,6 +571,18 @@
     marketingSpend: '',
     agency: '',
     agencyFee: '',
+    // Step 4 - Services + offering
+    topServices: '',
+    ticketSize: '',
+    serviceTowns: '',
+    seasonality: '',
+    topRevenueServices: '',
+    // Step 5 - Goals + voice
+    visitorMustKnow: '',
+    biggestChallenge: '',
+    successIn12Months: '',
+    idealCustomer: '',
+    dontWant: '',
   };
 
   function showError(el, msg) {
@@ -755,6 +854,82 @@
 
       markStepDone(3);
       activateStep(4);
+    });
+  }
+
+  /* ---------- Step 4 — Services + offering ---------- */
+  var step4Btn = byId('step4ContinueBtn');
+  if (step4Btn) {
+    step4Btn.addEventListener('click', function(){
+      var step4Error = byId('step4-error');
+      clearError(step4Error);
+      var topServices = (byId('topServices').value || '').trim();
+      var ticketSize = (byId('ticketSize').value || '').trim();
+      var serviceTowns = (byId('serviceTowns').value || '').trim();
+      var seasonality = (byId('seasonality').value || '').trim();
+      var topRevenueServices = (byId('topRevenueServices').value || '').trim();
+
+      if (!topServices) { showError(step4Error, 'List your top services (one per line).'); return; }
+      var serviceLines = topServices.split('\n').map(function(s){return s.trim();}).filter(function(s){return s.length;});
+      if (serviceLines.length < 1) { showError(step4Error, 'List at least one service.'); return; }
+      if (!ticketSize) { showError(step4Error, 'What\u2019s your average ticket size?'); return; }
+      if (!serviceTowns) { showError(step4Error, 'List the towns/cities where you work.'); return; }
+      if (!seasonality) { showError(step4Error, 'Pick a seasonality option.'); return; }
+      if (!topRevenueServices) { showError(step4Error, 'Which 1\u20132 services drive most revenue?'); return; }
+
+      state.topServices = topServices;
+      state.ticketSize = ticketSize;
+      state.serviceTowns = serviceTowns;
+      state.seasonality = seasonality;
+      state.topRevenueServices = topRevenueServices;
+
+      markStepDone(4);
+      activateStep(5);
+    });
+  }
+
+  /* ---------- Step 5 — Goals + voice + character counters ---------- */
+  // Live char counters on every textarea that has a counter element
+  document.querySelectorAll('textarea[maxlength]').forEach(function(ta){
+    var counterEl = document.querySelector('[data-char-count-for="' + ta.id + '"]');
+    if (!counterEl) return;
+    var max = parseInt(ta.getAttribute('maxlength'), 10) || 250;
+    function update() {
+      var len = ta.value.length;
+      counterEl.textContent = len;
+      var wrap = counterEl.parentElement;
+      wrap.classList.toggle('near-limit', len >= max * 0.85 && len < max);
+      wrap.classList.toggle('at-limit', len >= max);
+    }
+    ta.addEventListener('input', update);
+    update();
+  });
+
+  var step5Btn = byId('step5ContinueBtn');
+  if (step5Btn) {
+    step5Btn.addEventListener('click', function(){
+      var step5Error = byId('step5-error');
+      clearError(step5Error);
+      var visitorMustKnow = (byId('visitorMustKnow').value || '').trim();
+      var biggestChallenge = (byId('biggestChallenge').value || '').trim();
+      var successIn12Months = (byId('successIn12Months').value || '').trim();
+      var idealCustomer = (byId('idealCustomer').value || '').trim();
+      var dontWant = (byId('dontWant').value || '').trim();
+
+      if (!visitorMustKnow) { showError(step5Error, 'Please tell us the one most important thing visitors should know.'); return; }
+      if (!biggestChallenge) { showError(step5Error, 'What\u2019s your biggest current website challenge?'); return; }
+      if (!successIn12Months) { showError(step5Error, 'What does success look like in 12 months?'); return; }
+      if (!idealCustomer) { showError(step5Error, 'What kind of customer do you want more of?'); return; }
+      // dontWant is optional
+
+      state.visitorMustKnow = visitorMustKnow;
+      state.biggestChallenge = biggestChallenge;
+      state.successIn12Months = successIn12Months;
+      state.idealCustomer = idealCustomer;
+      state.dontWant = dontWant;
+
+      markStepDone(5);
+      activateStep(6);
     });
   }
 })();
