@@ -229,12 +229,12 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v07</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v08</span></a>
     <div class="topnav-right">
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
       <a href="#faq" class="topnav-link">Questions</a>
-      <a href="#pricing" class="btn btn-primary" id="navReserveBtn">Apply <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+      <a href="/apply/" class="btn btn-primary" id="navApplyBtn">Apply <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
     </div>
     <button class="topnav-burger" id="topnavBurger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
       <span></span><span></span><span></span>
@@ -250,7 +250,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     <a href="#pricing" class="mobile-menu-link">Pricing</a>
     <a href="#how" class="mobile-menu-link">How it works</a>
     <a href="#faq" class="mobile-menu-link">Questions</a>
-    <a href="#pricing" class="mobile-menu-cta" id="mobileMenuReserveBtn">Apply <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+    <a href="/apply/" class="mobile-menu-cta" id="mobileMenuApplyBtn">Apply <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
   </nav>
 </div>
 
@@ -512,17 +512,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   }
 
 
-  // Topnav Get notified -> scroll to #pricing and focus the email input
-  var navBtn=document.getElementById('navReserveBtn');
-  var emailInput=document.getElementById('reserveEmail');
-  if(navBtn && emailInput){
-    navBtn.addEventListener('click',function(e){
-      e.preventDefault();
-      var card=document.getElementById('pricing');
-      if(card){card.scrollIntoView({behavior:'smooth',block:'start'});}
-      setTimeout(function(){emailInput.focus({preventScroll:true});},650);
-    });
-  }
+  // Topnav Apply button is a real link to /apply/ now (removed legacy scroll-to-pricing handler).
 
   // Three-state reservation flow: email -> SendGrid OTP -> verify cookie -> Formspree
   var emailForm=document.getElementById('emailForm');
