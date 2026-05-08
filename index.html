@@ -118,6 +118,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 .founder-remaining{font-variant-numeric:tabular-nums;font-weight:700;color:var(--blue)}
 .founder-bar{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;margin-bottom:18px;max-width:280px}
 .stripe-cta{display:inline-flex;align-items:center;gap:.5rem;width:100%;justify-content:center;padding:.95rem 1.4rem;font-size:15.5px;font-weight:600;border-radius:10px;text-decoration:none;margin-bottom:8px;box-shadow:0 1px 2px rgba(37,99,235,.18),0 4px 12px rgba(37,99,235,.16)}
+.beta-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.22);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.4;margin-left:2px}
 .stripe-cta svg{width:16px;height:16px}
 .cta-divider{font-size:13px;color:var(--slate);text-align:center;margin:6px 0 14px;font-weight:500;letter-spacing:.01em}
 .easy-exit{margin-top:24px;padding:14px 18px;background:var(--bg);border:1px solid var(--rule);border-radius:10px;font-size:13.5px;color:var(--ink-soft);line-height:1.5}
@@ -233,7 +234,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v13</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v14</span></a>
     <div class="topnav-right">
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
@@ -285,7 +286,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
     <!-- Stripe paid-founder CTA: locks in current climbing-price founder slot -->
     <a id="stripeCheckout" class="btn btn-primary stripe-cta" href="https://buy.stripe.com/9B628t0oA6kp4ZP8nae3e00" target="_blank" rel="noopener">
-      Reserve now &middot; pay $<span id="ctaPrice">197</span>
+      Purchase at regular price. <span class="beta-badge">beta</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
     </a>
     <div class="cta-divider" aria-hidden="true">or just request an invitation</div>
@@ -590,12 +591,9 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       // module loaded, it'll start as soon as the element scrolls into view.
       if(typeof window.__priceCountUpReady === 'function') window.__priceCountUpReady(price);
       else if(priceEl) priceEl.textContent=price;
-      if(j.founderActive && j.code){
-        stripeBtn.href=STRIPE_LINK+'?prefilled_promo_code='+encodeURIComponent(j.code);
-      }else{
-        // All founders claimed — standard $197 path, no promo prefill
-        stripeBtn.href=STRIPE_LINK;
-      }
+      // v14 - button now reads "Purchase at regular price (beta)" so we drop the founder promo prefill.
+      // Stripe checkout always charges the regular $197. Founder discount is invitation-only via /apply/.
+      stripeBtn.href=STRIPE_LINK;
     }).catch(function(){
       // /api/founder-coupon unreachable — fail soft, kick the count-up to its default $197.
       if(typeof window.__priceCountUpReady === 'function') window.__priceCountUpReady(197);
