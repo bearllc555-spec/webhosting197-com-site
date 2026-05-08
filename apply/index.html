@@ -114,6 +114,28 @@
   .char-counter.near-limit{color:var(--amber)}
   .char-counter.at-limit{color:var(--red);font-weight:600}
 
+  /* Step 6 - submit + success state */
+  .legal-attestation{padding:14px 16px;background:var(--bg);border:1px solid var(--rule);border-radius:9px;margin-top:6px}
+  .legal-attestation .checkbox-inline{margin-top:0;align-items:flex-start;line-height:1.5;font-size:12.5px;color:var(--ink-soft)}
+  .legal-attestation input[type=checkbox]{margin-top:3px;flex-shrink:0}
+  .step-fine-print{margin-top:14px;font-size:12px;color:var(--slate);line-height:1.55}
+  .step-fine-print strong{color:var(--ink-soft);font-weight:600}
+  .btn-submit{padding:14px 26px;font-size:15px;font-weight:700}
+
+  .application-success{background:var(--bg-card);border:1px solid var(--rule);border-radius:14px;padding:48px 32px;text-align:center;margin-bottom:18px;animation:successFadeIn .5s cubic-bezier(.2,.7,.2,1)}
+  @keyframes successFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @media(prefers-reduced-motion:reduce){.application-success{animation:none}}
+  .success-checkmark{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,.10);margin-bottom:20px;color:var(--green)}
+  .success-checkmark svg{width:36px;height:36px}
+  .application-success h2{font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:0 0 12px;line-height:1.2}
+  .success-lead{font-size:15px;color:var(--ink-soft);margin:0 auto 24px;max-width:440px;line-height:1.55}
+  .success-lead strong{color:var(--ink);font-weight:600}
+  .success-meta{font-size:12.5px;color:var(--slate);margin-bottom:18px;letter-spacing:-.005em}
+  .success-meta code{background:var(--bg);border:1px solid var(--rule);padding:3px 8px;border-radius:5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--ink-soft);font-feature-settings:"tnum"}
+  .success-cta-note{font-size:13px;color:var(--slate);margin:0}
+  .success-cta-note a{color:var(--blue);text-decoration:none;font-weight:600}
+  .success-cta-note a:hover{text-decoration:underline}
+
   /* hidden by default; shown via JS state */
   [hidden]{display:none !important}
 </style>
@@ -121,7 +143,7 @@
 <body>
 
 <div class="topnav">
-  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v09</span></a>
+  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v10</span></a>
   <a href="/" class="home-link">&larr; Back home</a>
 </div>
 
@@ -510,11 +532,93 @@
   <div class="step disabled" id="step6">
     <div class="step-title"><span class="step-num">6</span>Logistics &amp; submit</div>
     <div class="step-sub">Best times to reach you, how you found us, anything else.</div>
-    <div class="placeholder-fields">
-      <div class="placeholder-line">Best times to reach you &middot; Time zone</div>
-      <div class="placeholder-line">How did you hear about us &middot; Anything else</div>
+
+    <div class="step-fields">
+      <div class="field">
+        <label>Best times to reach you (select all that work)</label>
+        <div class="checkbox-row">
+          <label class="checkbox-pill"><input type="checkbox" name="bestTime" value="Mornings (8am-12pm)"> Mornings (8am&ndash;12pm)</label>
+          <label class="checkbox-pill"><input type="checkbox" name="bestTime" value="Midday (12pm-2pm)"> Midday (12&ndash;2pm)</label>
+          <label class="checkbox-pill"><input type="checkbox" name="bestTime" value="Afternoons (2pm-5pm)"> Afternoons (2&ndash;5pm)</label>
+          <label class="checkbox-pill"><input type="checkbox" name="bestTime" value="Evenings (5pm-8pm)"> Evenings (5&ndash;8pm)</label>
+          <label class="checkbox-pill"><input type="checkbox" name="bestTime" value="Weekends"> Weekends</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="timeZone">Your time zone</label>
+        <select id="timeZone" required>
+          <option value="">Select one&hellip;</option>
+          <option>Eastern (ET)</option>
+          <option>Central (CT)</option>
+          <option>Mountain (MT)</option>
+          <option>Pacific (PT)</option>
+          <option>Alaska (AKT)</option>
+          <option>Hawaii (HST)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="heardAbout">How did you hear about us?</label>
+        <select id="heardAbout" required>
+          <option value="">Select one&hellip;</option>
+          <option>Direct invitation (cold email)</option>
+          <option>Direct invitation (LinkedIn)</option>
+          <option>Referral from existing customer</option>
+          <option>Referral from Slatepress / Anthony</option>
+          <option>Social media (Twitter/X, LinkedIn, etc.)</option>
+          <option>Search (Google)</option>
+          <option>Trade publication / podcast</option>
+          <option>Word of mouth</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="anythingElse">Anything else you want us to know? (optional)</label>
+        <textarea id="anythingElse" rows="3" maxlength="500" placeholder="Anything we should know that didn&rsquo;t fit above"></textarea>
+        <div class="char-counter"><span data-char-count-for="anythingElse">0</span> / 500</div>
+      </div>
+
+      <div class="legal-attestation">
+        <label class="checkbox-inline">
+          <input type="checkbox" id="legalConsent">
+          <span>I confirm the information I&rsquo;ve provided is accurate, and that I&rsquo;m submitting this application on behalf of the business named above.</span>
+        </label>
+      </div>
+
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary btn-submit" id="step6SubmitBtn">
+          Submit application
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div id="step6-error" class="alert alert-error" hidden></div>
+      <div class="step-fine-print">
+        We review every application individually. You&rsquo;ll hear back at <strong id="submitEmailEcho">your email</strong> within 48 hours.
+      </div>
     </div>
-    <div class="coming-next" style="margin-top:14px">Submit handler ships in the next build.</div>
+  </div>
+
+  <!-- Success state - replaces the entire form on successful submit -->
+  <div class="application-success" id="applicationSuccess" hidden>
+    <div class="success-checkmark">
+      <svg viewBox="0 0 60 60" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="30" cy="30" r="26"/>
+        <polyline points="20 30 27 37 41 22"/>
+      </svg>
+    </div>
+    <h2>Application received.</h2>
+    <p class="success-lead">
+      We review every application individually.<br>
+      You&rsquo;ll hear back at <strong id="successEmailEcho"></strong> within 48 hours.
+    </p>
+    <div class="success-meta">
+      Reference: <code id="referenceCode"></code>
+    </div>
+    <p class="success-cta-note">
+      Questions in the meantime? <a href="mailto:hello@webhosting197.com">hello@webhosting197.com</a>
+    </p>
   </div>
 
   <div class="footer-note">
@@ -583,6 +687,12 @@
     successIn12Months: '',
     idealCustomer: '',
     dontWant: '',
+    // Step 6 - Logistics + submit
+    bestTimes: [],
+    timeZone: '',
+    heardAbout: '',
+    anythingElse: '',
+    referenceCode: '',
   };
 
   function showError(el, msg) {
@@ -928,8 +1038,143 @@
       state.idealCustomer = idealCustomer;
       state.dontWant = dontWant;
 
+      // Echo their email into the step-6 fine-print line so they know where the reply goes
+      var submitEmailEcho = byId('submitEmailEcho');
+      if (submitEmailEcho && state.email) submitEmailEcho.textContent = state.email;
+
       markStepDone(5);
       activateStep(6);
+    });
+  }
+
+  /* ---------- Step 6 - Logistics + final submit ---------- */
+  function generateReferenceCode() {
+    return 'WH-' + Date.now().toString(36).toUpperCase() + '-' +
+           Math.random().toString(36).slice(2, 6).toUpperCase();
+  }
+
+  function buildSubmitPayload(refCode) {
+    return {
+      _subject: 'webhosting197 Application: ' + (state.businessName || '(unnamed)'),
+      _replyto: state.email,
+      source: 'webhosting197-application',
+      reference: refCode,
+      submitted_at: new Date().toISOString(),
+      // Identity (Step 1)
+      first_name: state.firstName,
+      last_name: state.lastName,
+      phone: state.phone,
+      email: state.email,
+      verified_token: state.verifiedToken || '',
+      // Business (Step 2)
+      business_name: state.businessName,
+      industry: state.industry,
+      industry_other: state.industryOther,
+      years_in_business: state.yearsInBusiness,
+      employees: state.employees,
+      revenue: state.revenue,
+      hq_city: state.hqCity,
+      hq_state: state.hqState,
+      service_area_depth: state.serviceAreaDepth,
+      // Web + marketing (Step 3)
+      website_url: state.websiteUrl,
+      no_website: state.noWebsite ? 'yes' : 'no',
+      gbp: state.gbp,
+      ad_channels: (state.adChannels || []).join(', '),
+      marketing_spend: state.marketingSpend,
+      agency: state.agency,
+      agency_fee: state.agencyFee,
+      // Services + offering (Step 4)
+      top_services: state.topServices,
+      ticket_size: state.ticketSize,
+      service_towns: state.serviceTowns,
+      seasonality: state.seasonality,
+      top_revenue_services: state.topRevenueServices,
+      // Goals + voice (Step 5)
+      visitor_must_know: state.visitorMustKnow,
+      biggest_challenge: state.biggestChallenge,
+      success_in_12_months: state.successIn12Months,
+      ideal_customer: state.idealCustomer,
+      dont_want: state.dontWant,
+      // Logistics (Step 6)
+      best_times: (state.bestTimes || []).join(', '),
+      time_zone: state.timeZone,
+      heard_about: state.heardAbout,
+      anything_else: state.anythingElse,
+    };
+  }
+
+  function showSuccessState() {
+    // Hide every step + the progress bar + headers; reveal the success card
+    document.querySelectorAll('.step').forEach(function(s){ s.style.display = 'none'; });
+    var progress = document.querySelector('.progress');
+    if (progress) progress.style.display = 'none';
+    var heading = document.querySelector('.heading');
+    var subhead = document.querySelector('.subhead');
+    if (heading) heading.style.display = 'none';
+    if (subhead) subhead.style.display = 'none';
+
+    var success = byId('applicationSuccess');
+    var emailEcho = byId('successEmailEcho');
+    var refCodeEl = byId('referenceCode');
+    if (emailEcho) emailEcho.textContent = state.email;
+    if (refCodeEl) refCodeEl.textContent = state.referenceCode;
+    if (success) {
+      success.hidden = false;
+      try {
+        success.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) { window.scrollTo(0, 0); }
+    }
+  }
+
+  var step6Btn = byId('step6SubmitBtn');
+  if (step6Btn) {
+    step6Btn.addEventListener('click', async function(){
+      var step6Error = byId('step6-error');
+      clearError(step6Error);
+
+      var bestTimes = Array.from(document.querySelectorAll('input[name="bestTime"]:checked')).map(function(c){ return c.value; });
+      var timeZone = (byId('timeZone').value || '').trim();
+      var heardAbout = (byId('heardAbout').value || '').trim();
+      var anythingElse = (byId('anythingElse').value || '').trim();
+      var legalConsent = byId('legalConsent') && byId('legalConsent').checked;
+
+      if (bestTimes.length === 0) { showError(step6Error, 'Pick at least one good time to reach you.'); return; }
+      if (!timeZone) { showError(step6Error, 'Pick your time zone.'); return; }
+      if (!heardAbout) { showError(step6Error, 'How did you hear about us?'); return; }
+      if (!legalConsent) { showError(step6Error, 'Please confirm the attestation checkbox above the submit button.'); return; }
+      if (!state.verifiedToken) { showError(step6Error, 'Identity verification is missing. Please scroll up and complete step 1.'); return; }
+
+      state.bestTimes = bestTimes;
+      state.timeZone = timeZone;
+      state.heardAbout = heardAbout;
+      state.anythingElse = anythingElse;
+      state.referenceCode = generateReferenceCode();
+
+      setBusy(step6Btn, true, 'Submitting...');
+
+      try {
+        var resp = await fetch('https://formspree.io/f/xjgjwobq', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(buildSubmitPayload(state.referenceCode))
+        });
+        var data = null;
+        try { data = await resp.json(); } catch (e) { /* Formspree returns JSON on success */ }
+
+        if (!resp.ok) {
+          var msg = (data && data.error) ? data.error : 'Submission failed. Please try again or email hello@webhosting197.com directly.';
+          showError(step6Error, msg);
+          setBusy(step6Btn, false);
+          return;
+        }
+
+        markStepDone(6);
+        showSuccessState();
+      } catch (err) {
+        showError(step6Error, 'Network error. Please try again or email hello@webhosting197.com directly.');
+        setBusy(step6Btn, false);
+      }
     });
   }
 })();
