@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>webhosting197 — Lifetime cloud web hosting. $197. With AI.</title>
-<meta name="description" content="One payment. One website. Forever-on cloud hosting. AI to build it, AI to keep it running. Launching 2026.">
+<title>webhosting197 — Lifetime hosting. $197 once. Invitation only.</title>
+<meta name="description" content="Lifetime cloud hosting. $197 once. Hand-picked customers only - apply to become a founder.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://webhosting197.com/">
-<meta property="og:title" content="webhosting197 — Lifetime cloud web hosting. $197. With AI.">
-<meta property="og:description" content="One payment. One website. Forever-on cloud hosting. AI to build it, AI to keep it running. Launching 2026.">
+<meta property="og:title" content="webhosting197 — Lifetime hosting. $197 once. Invitation only.">
+<meta property="og:description" content="Lifetime cloud hosting. $197 once. Hand-picked customers only - apply to become a founder.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://webhosting197.com/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -261,7 +261,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
       <a href="#faq" class="topnav-link">Questions</a>
-      <a href="#pricing" class="btn btn-primary" id="navReserveBtn">Get notified <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+      <a href="#pricing" class="btn btn-primary" id="navReserveBtn">Apply <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
     </div>
     <button class="topnav-burger" id="topnavBurger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
       <span></span><span></span><span></span>
@@ -277,14 +277,14 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     <a href="#pricing" class="mobile-menu-link">Pricing</a>
     <a href="#how" class="mobile-menu-link">How it works</a>
     <a href="#faq" class="mobile-menu-link">Questions</a>
-    <a href="#pricing" class="mobile-menu-cta" id="mobileMenuReserveBtn">Get notified <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+    <a href="#pricing" class="mobile-menu-cta" id="mobileMenuReserveBtn">Apply <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
   </nav>
 </div>
 
 <section class="hero">
-  <div class="eyebrow"><span class="dot"></span>Launching 2026</div>
-  <h1>lifetime cloud hosting, priced once.</h1>
-  <p class="lead">One payment. One website. Forever-on edge hosting on the same network the Fortune 500 runs on. AI to build it, run it, and keep it current.</p>
+  <div class="eyebrow"><span class="dot"></span>Invitation only</div>
+  <h1>Hosted for life. $197 once.</h1>
+  <p class="lead">Hand-picked customers only. Apply to become a founder.</p>
 </section>
 
 <section class="pricing-section" id="pricing">
@@ -451,38 +451,9 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
   document.addEventListener('scroll',onScroll,{passive:true});
   onScroll();
 
-  // Letter-by-letter H1 reveal — group by word so words wrap as units
-  var h1=document.querySelector('.hero h1');
-  if(h1){
-    var text=h1.textContent;
-    h1.textContent='';
-    h1.classList.add('h1-reveal');
-    var tokens=text.split(/(\s+)/); // keep whitespace tokens as separators
-    var i=0;
-    for(var t=0;t<tokens.length;t++){
-      var tok=tokens[t];
-      if(tok===''){continue;}
-      if(/^\s+$/.test(tok)){
-        // render whitespace as a non-animated space between word groups
-        var sp=document.createElement('span');
-        sp.className='space';
-        sp.innerHTML='&nbsp;';
-        h1.appendChild(sp);
-        continue;
-      }
-      var word=document.createElement('span');
-      word.className='word';
-      for(var k=0;k<tok.length;k++){
-        var letter=document.createElement('span');
-        letter.className='letter';
-        letter.textContent=tok.charAt(k);
-        letter.style.animationDelay=(i*28)+'ms';
-        word.appendChild(letter);
-        i++;
-      }
-      h1.appendChild(word);
-    }
-  }
+  // H1 reveal animation removed in favor of static H1 (post-pivot to invitation-only positioning).
+  // The shorter "Hosted for life. $197 once." reads stronger as a confident static statement.
+
 
   // Count-up $197 when it scrolls into view
   var amt=document.querySelector('.price-amount');
