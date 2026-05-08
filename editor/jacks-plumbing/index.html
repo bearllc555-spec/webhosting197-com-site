@@ -159,6 +159,34 @@
   .history-time { font-size: 0.75rem; color: var(--slate); margin-top: 0.2rem; }
   .history-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
   .history-row.current .history-actions { visibility: hidden; }
+
+  /* ---- color picker (Step 2.5a) ---- */
+  .color-picker { margin-top: 0.5rem; background: white; border: 1px solid var(--rule); border-radius: 10px; padding: 0.85rem; }
+  .cp-row { margin-bottom: 0.75rem; }
+  .cp-row:last-of-type { margin-bottom: 0; }
+  .cp-row-label { font-size: 0.7rem; font-weight: 600; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+  .cp-pick-row { display: flex; align-items: center; gap: 0.75rem; }
+  .cp-pick-hex { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; font-size: 0.8rem; color: var(--ink-soft); font-weight: 600; }
+  .cp-swatch-grid { display: flex; flex-wrap: wrap; gap: 0.32rem; }
+  .cp-grid-family { display: flex; gap: 0.25rem; margin-bottom: 0.25rem; }
+  .cp-grid-family:last-child { margin-bottom: 0; }
+  .cp-swatch { padding: 0; border: 1px solid var(--rule-strong); border-radius: 5px; cursor: pointer; transition: outline 0.12s, transform 0.12s, box-shadow 0.12s; outline: 2px solid transparent; outline-offset: 1px; flex-shrink: 0; }
+  .cp-swatch:hover { outline-color: rgba(245, 158, 11, 0.55); transform: scale(1.06); }
+  .cp-swatch.selected { outline: 3px solid #F59E0B; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18), 0 0 14px rgba(245, 158, 11, 0.30); }
+  .cp-swatch-large { width: 56px; height: 56px; border-radius: 8px; }
+  .cp-swatch-med { width: 30px; height: 30px; }
+  .cp-swatch-small { width: 22px; height: 22px; border-radius: 4px; }
+  .cp-hex-input { width: 130px; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 0.4rem 0.55rem; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; font-size: 0.82rem; outline: none; transition: border-color 0.15s, box-shadow 0.15s; text-transform: uppercase; }
+  .cp-hex-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  .cp-hex-input.invalid { border-color: var(--red); }
+  .cp-current { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg); padding: 0.4rem 0.65rem; border-radius: 6px; border: 1px solid var(--rule); font-size: 0.78rem; color: var(--slate); }
+  .cp-current-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--rule-strong); flex-shrink: 0; }
+  .cp-current-hex { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; color: var(--ink-soft); font-weight: 600; }
+  .cp-actions { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+  .cp-actions .btn { padding: 0.4rem 0.75rem; font-size: 0.8125rem; }
+  .cp-collapsed { font-size: 0.85rem; color: #047857; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--green-soft); border-radius: 8px; }
+  .cp-collapsed-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--rule-strong); display: inline-block; }
+  .cp-discarded { font-size: 0.8rem; color: var(--slate); padding: 0.4rem 0.6rem; background: var(--bg); border-radius: 6px; display: inline-block; }
 </style>
 </head>
 <body>
@@ -343,6 +371,9 @@ const $saveStatusText = document.getElementById("saveStatusText");
 async function sendRequest() {
   const request = $input.value.trim();
   if (!request) return;
+  // Step 2.5a: if a color picker is mid-preview, sending a new request means
+  // the customer moved on without confirming. Revert iframe and collapse.
+  if (activeColorPicker) discardColorPicker(activeColorPicker);
   $input.value = "";
   $send.disabled = true;
   // The sub-target label takes precedence in display if both are set
@@ -640,11 +671,16 @@ function buildErrorContent(wrap, bubbleEl, msg, actions) {
 function appendAssistantMessage(payload) {
   const { narration, diff, confidence, warnings, proposedSite, validated, validationError } = payload;
 
+  // Step 2.5a: color-change diffs render as a swatch picker rather than the
+  // standard diff card. Detection is single-op SET on brand.colors.* with a
+  // hex value. Multi-op or non-color diffs fall through to the standard render.
+  const isColorPicker = isColorPickerDiff(diff);
+
   const el = document.createElement("div");
   el.className = "msg assistant";
 
   let html = `<div class="text">${escapeHtml(narration)}</div>`;
-  if (diff && diff.length > 0) {
+  if (diff && diff.length > 0 && !isColorPicker) {
     html += `<div class="diff">${diff.map(renderDiffRow).join("")}</div>`;
   }
 
@@ -666,8 +702,8 @@ function appendAssistantMessage(payload) {
     html += `<div class="warnings">Heads up: ${escapeHtml(validationError)}. Apply may produce unexpected results.</div>`;
   }
 
-  // actions
-  if (diff && diff.length > 0) {
+  // actions (skipped for color-picker case — picker has its own Apply/Discard)
+  if (diff && diff.length > 0 && !isColorPicker) {
     html += `
       <div class="msg-actions">
         <button class="btn btn-primary apply-btn">Apply</button>
@@ -690,6 +726,12 @@ function appendAssistantMessage(payload) {
 
   $messages.appendChild(el);
   $messages.scrollTop = $messages.scrollHeight;
+
+  // For color-picker diffs, append the picker UI to the message and auto-preview
+  // AI's pick in the iframe so the customer sees the suggestion immediately.
+  if (isColorPicker) {
+    openColorPicker(payload, el);
+  }
 }
 
 function renderDiffRow(op) {
@@ -791,6 +833,243 @@ function applyDiff(narration, proposedSite, btn, diffOps) {
 
   renderHistory();
   flashSaveStatus(`Applied · ${narration.slice(0, 40)}${narration.length > 40 ? "..." : ""}`);
+}
+
+/* ---------- color picker (Step 2.5a) ---------- */
+// AI is unreliable at exact color matching ("hot pink" -> burgundy was the
+// motivating failure). Instead of asking the AI to nail the shade, we let it
+// pick a starting suggestion and let the customer point at the exact swatch
+// they want. Click-to-preview only — Apply commits the single history entry,
+// Discard reverts the iframe, new chat message auto-discards.
+
+let activeColorPicker = null;
+
+function isColorPickerDiff(diff) {
+  if (!Array.isArray(diff) || diff.length !== 1) return false;
+  const op = diff[0];
+  return op
+    && op.op === "set"
+    && typeof op.path === "string"
+    && op.path.startsWith("brand.colors.")
+    && typeof op.value === "string"
+    && /^#[0-9A-Fa-f]{6}$/.test(op.value);
+}
+
+function openColorPicker(payload, msgEl) {
+  // Only one picker open at a time; the new one auto-discards the prior.
+  if (activeColorPicker) discardColorPicker(activeColorPicker);
+
+  const { narration, diff } = payload;
+  const op = diff[0];
+  const path = op.path;
+  const aiHex = op.value.toUpperCase();
+  const originalRaw = readSitePath(currentSite, path);
+  const originalHex = (typeof originalRaw === "string" && /^#[0-9A-Fa-f]{6}$/.test(originalRaw))
+    ? originalRaw.toUpperCase()
+    : "#FFFFFF";
+
+  const wrap = document.createElement("div");
+  wrap.className = "color-picker";
+
+  const similar = generateSimilarShades(aiHex);
+  const fullGrid = STANDARD_PALETTE;
+
+  const swatchHTML = (hex, klass, isSelected) =>
+    `<button type="button" class="cp-swatch ${klass}${isSelected ? " selected" : ""}" data-hex="${hex}" style="background: ${hex}" aria-label="${hex}"></button>`;
+
+  wrap.innerHTML = `
+    <div class="cp-row">
+      <div class="cp-row-label">Press's pick</div>
+      <div class="cp-pick-row">
+        ${swatchHTML(aiHex, "cp-swatch-large", true)}
+        <span class="cp-pick-hex">${aiHex}</span>
+      </div>
+    </div>
+    <div class="cp-row">
+      <div class="cp-row-label">Similar shades</div>
+      <div class="cp-swatch-grid">
+        ${similar.map((h) => swatchHTML(h, "cp-swatch-med", false)).join("")}
+      </div>
+    </div>
+    <div class="cp-row">
+      <div class="cp-row-label">Or pick from</div>
+      ${fullGrid.map((family) => `
+        <div class="cp-grid-family">
+          ${family.map((h) => swatchHTML(h, "cp-swatch-small", false)).join("")}
+        </div>`).join("")}
+    </div>
+    <div class="cp-row">
+      <div class="cp-row-label">Or paste a hex</div>
+      <input type="text" class="cp-hex-input" placeholder="#XXXXXX" maxlength="7" />
+    </div>
+    <div class="cp-row">
+      <div class="cp-current">
+        <span>Currently previewing:</span>
+        <span class="cp-current-swatch" style="background: ${aiHex}"></span>
+        <span class="cp-current-hex">${aiHex}</span>
+      </div>
+    </div>
+    <div class="cp-actions">
+      <button type="button" class="btn btn-primary cp-apply-btn">Apply</button>
+      <button type="button" class="btn btn-ghost cp-discard-btn">Discard</button>
+    </div>
+  `;
+
+  msgEl.appendChild(wrap);
+
+  const state = { wrap, msgEl, path, narration, originalHex, previewHex: aiHex };
+
+  // Auto-preview AI's pick on open so the customer sees what they're starting from.
+  applyColorToIframe(path, aiHex);
+
+  // Wire swatch clicks
+  wrap.querySelectorAll(".cp-swatch").forEach((sw) => {
+    sw.addEventListener("click", (e) => {
+      e.preventDefault();
+      const hex = (sw.dataset.hex || "").toUpperCase();
+      if (/^#[0-9A-Fa-f]{6}$/.test(hex)) selectColorInPicker(state, hex);
+    });
+  });
+
+  // Wire hex input — preview as soon as the typed value is a valid 6-char hex
+  const hexInput = wrap.querySelector(".cp-hex-input");
+  hexInput.addEventListener("input", () => {
+    let v = hexInput.value.trim();
+    if (v && !v.startsWith("#")) v = "#" + v;
+    if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+      hexInput.classList.remove("invalid");
+      selectColorInPicker(state, v.toUpperCase());
+    } else if (v.length > 1) {
+      hexInput.classList.add("invalid");
+    } else {
+      hexInput.classList.remove("invalid");
+    }
+  });
+
+  wrap.querySelector(".cp-apply-btn").addEventListener("click", () => commitColorPicker(state));
+  wrap.querySelector(".cp-discard-btn").addEventListener("click", () => discardColorPicker(state));
+
+  activeColorPicker = state;
+  $messages.scrollTop = $messages.scrollHeight;
+}
+
+function selectColorInPicker(state, hex) {
+  state.previewHex = hex;
+  applyColorToIframe(state.path, hex);
+  const cs = state.wrap.querySelector(".cp-current-swatch");
+  const ch = state.wrap.querySelector(".cp-current-hex");
+  if (cs) cs.style.background = hex;
+  if (ch) ch.textContent = hex;
+  state.wrap.querySelectorAll(".cp-swatch").forEach((s) => {
+    s.classList.toggle("selected", (s.dataset.hex || "").toUpperCase() === hex);
+  });
+}
+
+// Set the relevant CSS variable on the iframe :root. Pure preview — no diff
+// stack write, no history entry. Mirror of applyOpToIframe's color branch.
+function applyColorToIframe(path, hex) {
+  const doc = $iframe.contentDocument;
+  if (!doc) return;
+  const root = doc.documentElement.style;
+  if (path === "brand.colors.primary")        root.setProperty("--primary", hex);
+  else if (path === "brand.colors.accent")    root.setProperty("--accent", hex);
+  else if (path === "brand.colors.neutral_dark") root.setProperty("--neutral-dark", hex);
+  else if (path === "brand.colors.neutral_light") root.setProperty("--neutral-light", hex);
+}
+
+// Apply: route through the existing applyDiff so history + persistence + the
+// A5 pulse + count chip behavior all stay consistent with non-picker applies.
+function commitColorPicker(state) {
+  const finalOp = { op: "set", path: state.path, value: state.previewHex };
+  const finalDiff = [finalOp];
+
+  const finalSite = structuredClone(currentSite);
+  setSitePath(finalSite, state.path, state.previewHex);
+
+  // applyDiff replaces the parent of the button with "✓ Applied". Give it a
+  // throwaway button host so it doesn't blow away the picker container.
+  const host = document.createElement("div");
+  host.style.display = "none";
+  const tempBtn = document.createElement("button");
+  host.appendChild(tempBtn);
+  state.wrap.appendChild(host);
+
+  applyDiff(state.narration, finalSite, tempBtn, finalDiff);
+
+  // Replace the picker UI with a compact confirmation row.
+  const before = state.wrap.parentElement;
+  state.wrap.innerHTML = `<div class="cp-collapsed">✓ Applied <span class="cp-collapsed-swatch" style="background: ${state.previewHex}"></span> ${state.previewHex}</div>`;
+  if (activeColorPicker === state) activeColorPicker = null;
+  if (before) before.scrollTop = before.scrollHeight;
+  $messages.scrollTop = $messages.scrollHeight;
+}
+
+function discardColorPicker(state) {
+  applyColorToIframe(state.path, state.originalHex);
+  state.wrap.innerHTML = `<div class="cp-discarded">Discarded.</div>`;
+  if (activeColorPicker === state) activeColorPicker = null;
+}
+
+// Generate 5 similar swatches by walking lightness up and down around AI's pick.
+// Saturation and hue stay fixed — gives the customer "same color, lighter/darker"
+// rather than wandering into adjacent hues.
+function generateSimilarShades(hex) {
+  const hsl = hexToHsl(hex);
+  const offsets = [-22, -11, 11, 22, 33];
+  return offsets.map((delta) => {
+    const l = Math.max(8, Math.min(94, hsl.l + delta));
+    return hslToHex(hsl.h, hsl.s, l);
+  });
+}
+
+// 9 hue families x 6 lightness stops. Familiar Tailwind-style ladder.
+const STANDARD_PALETTE = [
+  ["#FFF1F2", "#FECDD3", "#FB7185", "#E11D48", "#9F1239", "#4C0519"], // rose
+  ["#FEF2F2", "#FECACA", "#F87171", "#DC2626", "#991B1B", "#450A0A"], // red
+  ["#FFF7ED", "#FED7AA", "#FB923C", "#EA580C", "#9A3412", "#431407"], // orange
+  ["#FFFBEB", "#FDE68A", "#FBBF24", "#D97706", "#92400E", "#451A03"], // amber
+  ["#F0FDF4", "#BBF7D0", "#4ADE80", "#16A34A", "#166534", "#052E16"], // green
+  ["#F0FDFA", "#99F6E4", "#2DD4BF", "#0D9488", "#115E59", "#042F2E"], // teal
+  ["#EFF6FF", "#BFDBFE", "#60A5FA", "#2563EB", "#1E3A8A", "#172554"], // blue
+  ["#FAF5FF", "#E9D5FF", "#C084FC", "#9333EA", "#6B21A8", "#3B0764"], // purple
+  ["#F8FAFC", "#E2E8F0", "#94A3B8", "#475569", "#1E293B", "#020617"], // neutral
+];
+
+function hexToHsl(hex) {
+  hex = hex.replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
+      case g: h = ((b - r) / d + 2); break;
+      case b: h = ((r - g) / d + 4); break;
+    }
+    h *= 60;
+  }
+  return { h, s: s * 100, l: l * 100 };
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60)       { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) {        g = c; b = x; }
+  else if (h < 240) {        g = x; b = c; }
+  else if (h < 300) { r = x;        b = c; }
+  else              { r = c;        b = x; }
+  const toHex = (v) => Math.round((v + m) * 255).toString(16).padStart(2, "0").toUpperCase();
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 // Read the value at a dot/bracket path inside the site JSON. Mirror of
