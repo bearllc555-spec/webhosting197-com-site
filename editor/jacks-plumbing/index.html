@@ -177,7 +177,7 @@
       <span id="saveStatusText">All changes saved</span>
     </span>
     <button class="btn btn-ghost" id="downloadBtn" title="Download a snapshot of your site.json">Download backup</button>
-    <button class="btn btn-primary" id="publishBtn">Publish · live in 30s</button>
+    <button class="btn btn-primary" id="publishBtn">Publish · coming soon</button>
   </div>
 
   <!-- main -->
@@ -1018,7 +1018,7 @@ $publishBtn.addEventListener("click", () => {
   // Step 1: Publish wiring is deferred to Step 5 (KV-backed /api/apply +
   // server-side render of preview from site.json). For now, be honest with
   // the customer rather than pretending to publish.
-  flashSaveStatus("Publish coming soon — your local changes are still here");
+  flashSaveStatus("Publish wires up next. Changes are saved locally.");
 });
 
 $downloadBtn.addEventListener("click", () => {
