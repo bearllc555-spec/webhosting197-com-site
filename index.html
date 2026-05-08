@@ -229,7 +229,7 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v09</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v10</span></a>
     <div class="topnav-right">
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
@@ -280,29 +280,22 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
     </a>
     <div class="cta-divider" aria-hidden="true">or just request an invitation</div>
 
-    <!-- State 1: email entry -->
+    <!-- v10: lightweight one-shot waitlist (Formspree direct, no OTP, no marketing list) -->
     <div class="reserve-state active" id="state1">
-      <form class="reserve-form" id="emailForm" novalidate>
-        <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" class="reserve-input" id="emailInput">
-        <button type="submit" class="btn btn-primary" id="emailBtn">Waitlist <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>
+      <form class="reserve-form" id="waitlistForm" novalidate>
+        <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" class="reserve-input" id="waitlistInput">
+        <button type="submit" class="btn btn-primary" id="waitlistBtn">Waitlist <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg></button>
       </form>
-      <p class="reserve-note">We&rsquo;ll email you a 6-digit code to confirm. No spam.</p>
+      <p class="reserve-note">We&rsquo;ll email you when invitations open. No spam.</p>
     </div>
 
-    <!-- State 2: code entry -->
-    <div class="reserve-state" id="state2">
-      <p class="reserve-step-meta">We sent a 6-digit code to <strong id="codeEmailDisplay"></strong>. Check your inbox (and spam, just in case).</p>
-      <form class="reserve-form stacked" id="codeForm" novalidate>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="" class="reserve-input code-input" id="codeInput" required>
-        <button type="submit" class="btn btn-primary" id="codeBtn">Confirm and reserve <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button>
-      </form>
-      <button type="button" class="reserve-back" id="resendBack">&larr; Use a different email or resend code</button>
-    </div>
-
-    <!-- State 3: success -->
+    <!-- Success state - same card slot, swapped in on success -->
     <div class="reserve-state" id="state3">
-      <div class="reserve-success show"><div class="reserve-success-text">Application received. We review every application individually and respond to <strong id="successEmail"></strong> within 48 hours.</div><div class="reserve-success-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div></div>
-      <p class="reserve-note">First 100 accepted applicants lock in founder status for life.</p>
+      <div class="reserve-success show">
+        <div class="reserve-success-text">You&rsquo;re on the waitlist. We&rsquo;ll email <strong id="successEmail"></strong> when invitations open.</div>
+        <div class="reserve-success-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      </div>
+      <p class="reserve-note">Want to skip the line? <a href="/apply/" style="color:var(--blue);font-weight:600">Apply for a founder invitation</a>.</p>
     </div>
 
     <div class="reserve-error" id="reserveError"></div>
@@ -514,84 +507,55 @@ h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;letter-spacing:-.035em;line-
 
   // Topnav Apply button is a real link to /apply/ now (removed legacy scroll-to-pricing handler).
 
-  // Three-state reservation flow: email -> SendGrid OTP -> verify cookie -> Formspree
-  var emailForm=document.getElementById('emailForm');
-  var emailInput=document.getElementById('emailInput');
-  var emailBtn=document.getElementById('emailBtn');
-  var codeForm=document.getElementById('codeForm');
-  var codeInput=document.getElementById('codeInput');
-  var codeBtn=document.getElementById('codeBtn');
-  var codeEmailDisplay=document.getElementById('codeEmailDisplay');
+  // v10: lightweight one-shot waitlist - POSTs to Formspree xykonjqq with source=webhosting197-waitlist
+  // Replaces the prior SendGrid OTP + marketing-list capture flow.
+  var waitlistForm=document.getElementById('waitlistForm');
+  var waitlistInput=document.getElementById('waitlistInput');
+  var waitlistBtn=document.getElementById('waitlistBtn');
   var successEmail=document.getElementById('successEmail');
-  var resendBack=document.getElementById('resendBack');
   var state1=document.getElementById('state1');
-  var state2=document.getElementById('state2');
   var state3=document.getElementById('state3');
   var errBox=document.getElementById('reserveError');
-  var currentEmail='';
 
   function showState(n){
-    [state1,state2,state3].forEach(function(s,i){if(s)s.classList.toggle('active',(i+1)===n);});
+    if(state1) state1.classList.toggle('active', n===1);
+    if(state3) state3.classList.toggle('active', n===3);
     if(errBox){errBox.classList.remove('show');errBox.textContent='';}
   }
   function setBusy(b,label){b.disabled=true;b.dataset.origLabel=b.innerHTML;b.innerHTML=label;}
   function clearBusy(b){b.disabled=false;if(b.dataset.origLabel)b.innerHTML=b.dataset.origLabel;}
   function showError(msg){if(errBox){errBox.textContent=msg;errBox.classList.add('show');}}
 
-  if(emailForm){
-    emailForm.addEventListener('submit',function(e){
+  if(waitlistForm){
+    waitlistForm.addEventListener('submit',function(e){
       e.preventDefault();
       if(errBox){errBox.classList.remove('show');errBox.textContent='';}
-      var email=(emailInput.value||'').trim();
+      var email=(waitlistInput.value||'').trim();
       if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showError('Please enter a valid email address.');return;}
-      currentEmail=email;
-      setBusy(emailBtn,'Sending code\u2026');
-      fetch('/api/verify/start',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})})
-        .then(function(res){return res.json().then(function(j){return {res:res,j:j};});})
-        .then(function(r){
-          clearBusy(emailBtn);
-          if(r.res.ok && r.j.ok){
-            if(codeEmailDisplay)codeEmailDisplay.textContent=email;
-            codeInput.value='';
-            showState(2);
-            setTimeout(function(){codeInput.focus();},120);
-          }else{
-            showError((r.j && r.j.error)==='invalid_email'?'Please enter a valid email address.':'We could not send a code. Please try again.');
-          }
+      setBusy(waitlistBtn,'Saving\u2026');
+      fetch('https://formspree.io/f/xykonjqq',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({
+          email:email,
+          source:'webhosting197-waitlist',
+          _subject:'webhosting197 waitlist signup: '+email,
+          _replyto:email,
+          submitted_at:new Date().toISOString()
         })
-        .catch(function(){clearBusy(emailBtn);showError('Network error. Please try again.');});
-    });
-  }
-
-  if(codeForm){
-    codeForm.addEventListener('submit',function(e){
-      e.preventDefault();
-      if(errBox){errBox.classList.remove('show');errBox.textContent='';}
-      var code=(codeInput.value||'').replace(/\D/g,'').trim();
-      if(!/^\d{4,8}$/.test(code)){showError('Enter the 6-digit code from your email.');return;}
-      setBusy(codeBtn,'Verifying\u2026');
-      fetch('/api/verify/check',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:currentEmail,code:code})})
-        .then(function(res){return res.json().then(function(j){return {res:res,j:j};});})
-        .then(function(r){
-          clearBusy(codeBtn);
-          if(r.res.ok && r.j.ok){
-            if(successEmail)successEmail.textContent=currentEmail;
+      })
+        .then(function(res){
+          clearBusy(waitlistBtn);
+          if(res.ok){
+            if(successEmail)successEmail.textContent=email;
             showState(3);
           }else{
-            var err=r.j && r.j.error;
-            if(err==='invalid_code'){showError('That code is incorrect. Try again or resend.');}
-            else if(err==='expired'){showError('Code expired. Tap below to resend.');}
-            else if(err==='no_session'){showError('Session expired. Tap below to start over.');}
-            else if(err==='email_mismatch'){showError('Email mismatch. Tap below to start over.');}
-            else{showError('We could not verify the code. Please try again.');}
+            showError('We could not save your spot. Please try again or email hello@webhosting197.com.');
           }
         })
-        .catch(function(){clearBusy(codeBtn);showError('Network error. Please try again.');});
+        .catch(function(){clearBusy(waitlistBtn);showError('Network error. Please try again.');});
     });
   }
-
-  if(resendBack){resendBack.addEventListener('click',function(){showState(1);setTimeout(function(){emailInput.focus();},80);});}
-  if(codeInput){codeInput.addEventListener('input',function(e){var v=e.target.value.replace(/\D/g,'');if(v!==e.target.value)e.target.value=v;});}
 
   // Live founder spot counter + climbing price + Stripe CTA wiring
   (function(){
