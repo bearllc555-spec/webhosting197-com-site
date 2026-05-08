@@ -94,6 +94,22 @@
   .footer-note{margin-top:36px;font-size:12.5px;color:var(--slate);text-align:center;line-height:1.6}
   .footer-note a{color:var(--slate);text-decoration:underline}
 
+  /* Multi-step form field patterns */
+  .step-fields{margin-left:36px;display:flex;flex-direction:column;gap:14px}
+  .checkbox-inline{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;margin-top:6px}
+  .checkbox-inline input{margin:0}
+  .radio-row,.checkbox-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .radio-pill,.checkbox-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--rule-strong);border-radius:8px;background:#fff;font-size:13.5px;color:var(--ink-soft);cursor:pointer;transition:border-color .12s,background .12s,color .12s;user-select:none}
+  .radio-pill:hover,.checkbox-pill:hover{border-color:var(--slate)}
+  .radio-pill input,.checkbox-pill input{position:absolute;opacity:0;pointer-events:none}
+  .radio-pill:has(input:checked),.checkbox-pill:has(input:checked){background:var(--blue-soft);border-color:var(--blue);color:var(--blue-deep);font-weight:600}
+
+  /* Step transition: fade-up when a step becomes active */
+  .step{transition:opacity .25s ease,transform .25s ease}
+  .step.just-activated{animation:stepFadeIn .35s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes stepFadeIn{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @media(prefers-reduced-motion:reduce){.step.just-activated{animation:none}}
+
   /* hidden by default; shown via JS state */
   [hidden]{display:none !important}
 </style>
@@ -101,7 +117,7 @@
 <body>
 
 <div class="topnav">
-  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v04</span></a>
+  <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v08</span></a>
   <a href="/" class="home-link">&larr; Back home</a>
 </div>
 
@@ -187,24 +203,196 @@
   <!-- Step 2 - Your business (placeholder for v04, real fields ship in v05) -->
   <div class="step disabled" id="step2">
     <div class="step-title"><span class="step-num">2</span>Your business</div>
-    <div class="step-sub">Business name, industry, location, size.</div>
-    <div class="placeholder-fields">
-      <div class="placeholder-line">Business name &middot; Industry vertical &middot; Years in business</div>
-      <div class="placeholder-line">Number of employees &middot; Annual revenue range &middot; HQ city + state</div>
-      <div class="placeholder-line">Service area depth (local town &middot; metro &middot; state &middot; national)</div>
+    <div class="step-sub">Tell us who you are, what you do, where you operate.</div>
+
+    <div class="step-fields">
+      <div class="field">
+        <label for="businessName">Business name</label>
+        <input id="businessName" type="text" autocomplete="organization" required>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="industry">Industry / vertical</label>
+          <select id="industry" required>
+            <option value="">Select one&hellip;</option>
+            <option>Roofing</option>
+            <option>Personal Injury Law</option>
+            <option>HVAC</option>
+            <option>Plastic Surgery / Med Spa</option>
+            <option>Senior Care / Home Care</option>
+            <option>DUI / Criminal Defense</option>
+            <option>Plumbing</option>
+            <option>Dental Practice</option>
+            <option>Landscaping / Lawn Care</option>
+            <option>Auto Repair</option>
+            <option>Chiropractor</option>
+            <option>Real Estate</option>
+            <option>Financial Advisor</option>
+            <option>Wedding Venue</option>
+            <option>Fitness Studio</option>
+            <option>Daycare / Preschool</option>
+            <option>Pet Grooming / Boarding</option>
+            <option>Restaurant</option>
+            <option>Insurance Agent</option>
+            <option>Multi-service (HVAC + Plumbing + Electrical)</option>
+            <option value="Other">Other (describe)</option>
+          </select>
+        </div>
+        <div class="field" id="industryOtherWrap" hidden>
+          <label for="industryOther">If Other, describe</label>
+          <input id="industryOther" type="text" placeholder="e.g., commercial cleaning">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="yearsInBusiness">Years in business</label>
+          <select id="yearsInBusiness" required>
+            <option value="">Select one&hellip;</option>
+            <option>Less than 1</option>
+            <option>1&ndash;3</option>
+            <option>4&ndash;10</option>
+            <option>11+</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="employees">Number of employees</label>
+          <select id="employees" required>
+            <option value="">Select one&hellip;</option>
+            <option>Just me</option>
+            <option>2&ndash;5</option>
+            <option>6&ndash;15</option>
+            <option>16&ndash;50</option>
+            <option>50+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="revenue">Approximate annual revenue</label>
+        <select id="revenue" required>
+          <option value="">Select one&hellip;</option>
+          <option>Pre-revenue</option>
+          <option>Under $250K</option>
+          <option>$250K&ndash;$1M</option>
+          <option>$1M&ndash;$5M</option>
+          <option>$5M&ndash;$25M</option>
+          <option>$25M+</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="hqCity">HQ city</label>
+          <input id="hqCity" type="text" autocomplete="address-level2" required>
+        </div>
+        <div class="field">
+          <label for="hqState">State</label>
+          <select id="hqState" required>
+            <option value="">Select one&hellip;</option>
+            <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option><option>DC</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="serviceAreaDepth">Service area depth</label>
+        <select id="serviceAreaDepth" required>
+          <option value="">Select one&hellip;</option>
+          <option>Local town only</option>
+          <option>Metro region</option>
+          <option>Statewide</option>
+          <option>Multi-state</option>
+          <option>National</option>
+        </select>
+      </div>
+
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary" id="step2ContinueBtn">
+          Continue to step 3
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div id="step2-error" class="alert alert-error" hidden></div>
     </div>
-    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
   </div>
 
   <!-- Step 3 - Web + marketing presence -->
   <div class="step disabled" id="step3">
     <div class="step-title"><span class="step-num">3</span>Web &amp; marketing presence</div>
-    <div class="step-sub">Current site, Google Business, advertising, agency relationships.</div>
-    <div class="placeholder-fields">
-      <div class="placeholder-line">Current website URL &middot; Google Business Profile (Y/N) &middot; Currently advertising on</div>
-      <div class="placeholder-line">Approximate monthly marketing spend &middot; Currently with an agency (Y/N + monthly fee)</div>
+    <div class="step-sub">Where you are today &mdash; site, listings, current marketing spend.</div>
+
+    <div class="step-fields">
+      <div class="field">
+        <label for="websiteUrl">Current website URL</label>
+        <input id="websiteUrl" type="url" placeholder="https://yourbusiness.com" autocomplete="url">
+        <div class="field-help">
+          <label class="checkbox-inline">
+            <input type="checkbox" id="noWebsite"> I don&rsquo;t have a website yet
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Google Business Profile</label>
+        <div class="radio-row">
+          <label class="radio-pill"><input type="radio" name="gbp" value="Yes"> Yes</label>
+          <label class="radio-pill"><input type="radio" name="gbp" value="No"> No</label>
+          <label class="radio-pill"><input type="radio" name="gbp" value="Don't know"> Don&rsquo;t know</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Currently advertising on (select all that apply)</label>
+        <div class="checkbox-row">
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="Google Ads"> Google Ads</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="Meta (Facebook/Instagram)"> Meta (FB/IG)</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="Local print"> Local print</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="Direct mail"> Direct mail</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="TV"> TV</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="Radio"> Radio</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="Local SEO"> Local SEO</label>
+          <label class="checkbox-pill"><input type="checkbox" name="adChannel" value="None"> None</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="marketingSpend">Approximate monthly marketing spend</label>
+        <select id="marketingSpend" required>
+          <option value="">Select one&hellip;</option>
+          <option>Just starting (no current spend)</option>
+          <option>Under $1K</option>
+          <option>$1K&ndash;$3K</option>
+          <option>$3K&ndash;$5K</option>
+          <option>$5K&ndash;$10K</option>
+          <option>$10K&ndash;$25K</option>
+          <option>$25K+</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Currently working with a marketing agency</label>
+        <div class="radio-row">
+          <label class="radio-pill"><input type="radio" name="agency" value="Yes"> Yes</label>
+          <label class="radio-pill"><input type="radio" name="agency" value="No"> No</label>
+          <label class="radio-pill"><input type="radio" name="agency" value="In the past"> In the past</label>
+        </div>
+      </div>
+
+      <div class="field" id="agencyFeeWrap" hidden>
+        <label for="agencyFee">Monthly fee (approximately)</label>
+        <input id="agencyFee" type="text" placeholder="e.g., $1,500/mo" autocomplete="off">
+      </div>
+
+      <div class="step-cta">
+        <button type="button" class="btn btn-primary" id="step3ContinueBtn">
+          Continue to step 4
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div id="step3-error" class="alert alert-error" hidden></div>
     </div>
-    <div class="coming-next" style="margin-top:14px">Fields open in the next build.</div>
   </div>
 
   <!-- Step 4 - Services + offering -->
@@ -272,11 +460,30 @@
   // along on submit so the server-signed proof of identity verification accompanies
   // the Formspree POST.
   var state = {
+    // Step 1 - Identity
     firstName: '',
     lastName: '',
     phone: '',
     email: '',
     verifiedToken: null,
+    // Step 2 - Your business
+    businessName: '',
+    industry: '',
+    industryOther: '',
+    yearsInBusiness: '',
+    employees: '',
+    revenue: '',
+    hqCity: '',
+    hqState: '',
+    serviceAreaDepth: '',
+    // Step 3 - Web + marketing presence
+    websiteUrl: '',
+    noWebsite: false,
+    gbp: '',
+    adChannels: [],
+    marketingSpend: '',
+    agency: '',
+    agencyFee: '',
   };
 
   function showError(el, msg) {
@@ -304,14 +511,35 @@
   }
 
   function unlockNextSteps() {
-    // v04: visually mark step 1 as done; subsequent steps remain disabled
-    // until v05+ ships their form fields.
     var s1 = byId('step1');
     s1.classList.remove('active');
     s1.classList.add('done');
     byId('dot1').classList.remove('active');
     byId('dot1').classList.add('done');
-    // v05 will: enable steps 2-3 here, focus first field
+    activateStep(2);
+  }
+  function activateStep(n) {
+    var step = byId('step' + n);
+    if (!step) return;
+    step.classList.remove('disabled');
+    step.classList.add('active','just-activated');
+    var dot = byId('dot' + n);
+    if (dot) dot.classList.add('active');
+    setTimeout(function(){ step.classList.remove('just-activated'); }, 400);
+    // Scroll into view + focus first input
+    setTimeout(function(){
+      step.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var firstField = step.querySelector('input:not([type=hidden]):not([disabled]),select:not([disabled]),textarea:not([disabled])');
+      if (firstField) firstField.focus({ preventScroll: true });
+    }, 250);
+  }
+  function markStepDone(n) {
+    var step = byId('step' + n);
+    if (!step) return;
+    step.classList.remove('active');
+    step.classList.add('done');
+    var dot = byId('dot' + n);
+    if (dot) { dot.classList.remove('active'); dot.classList.add('done'); }
   }
 
   sendBtn.addEventListener('click', async function(){
@@ -422,6 +650,113 @@
   smsCodeEl.addEventListener('keydown', function(e){
     if (e.key === 'Enter') { e.preventDefault(); verifyBtn.click(); }
   });
+
+  /* ---------- Step 2 — Your business ---------- */
+  var step2Btn = byId('step2ContinueBtn');
+  var industryEl = byId('industry');
+  var industryOtherWrap = byId('industryOtherWrap');
+  var industryOtherEl = byId('industryOther');
+  if (industryEl) {
+    industryEl.addEventListener('change', function(){
+      industryOtherWrap.hidden = (industryEl.value !== 'Other');
+      if (industryEl.value !== 'Other' && industryOtherEl) industryOtherEl.value = '';
+    });
+  }
+  if (step2Btn) {
+    step2Btn.addEventListener('click', function(){
+      var step2Error = byId('step2-error');
+      clearError(step2Error);
+      var businessName = (byId('businessName').value || '').trim();
+      var industry = (byId('industry').value || '').trim();
+      var industryOther = (byId('industryOther').value || '').trim();
+      var years = (byId('yearsInBusiness').value || '').trim();
+      var employees = (byId('employees').value || '').trim();
+      var revenue = (byId('revenue').value || '').trim();
+      var hqCity = (byId('hqCity').value || '').trim();
+      var hqState = (byId('hqState').value || '').trim();
+      var serviceAreaDepth = (byId('serviceAreaDepth').value || '').trim();
+
+      if (!businessName) { showError(step2Error, 'Please enter your business name.'); return; }
+      if (!industry) { showError(step2Error, 'Please pick your industry.'); return; }
+      if (industry === 'Other' && !industryOther) { showError(step2Error, 'Please describe your industry.'); return; }
+      if (!years) { showError(step2Error, 'How many years has your business been operating?'); return; }
+      if (!employees) { showError(step2Error, 'Roughly how many employees?'); return; }
+      if (!revenue) { showError(step2Error, 'Approximate annual revenue?'); return; }
+      if (!hqCity || !hqState) { showError(step2Error, 'Please fill in your HQ city and state.'); return; }
+      if (!serviceAreaDepth) { showError(step2Error, 'Please pick your service area depth.'); return; }
+
+      state.businessName = businessName;
+      state.industry = industry;
+      state.industryOther = industryOther;
+      state.yearsInBusiness = years;
+      state.employees = employees;
+      state.revenue = revenue;
+      state.hqCity = hqCity;
+      state.hqState = hqState;
+      state.serviceAreaDepth = serviceAreaDepth;
+
+      markStepDone(2);
+      activateStep(3);
+    });
+  }
+
+  /* ---------- Step 3 — Web + marketing presence ---------- */
+  var step3Btn = byId('step3ContinueBtn');
+  var websiteUrlEl = byId('websiteUrl');
+  var noWebsiteEl = byId('noWebsite');
+  if (noWebsiteEl && websiteUrlEl) {
+    noWebsiteEl.addEventListener('change', function(){
+      if (noWebsiteEl.checked) {
+        websiteUrlEl.value = '';
+        websiteUrlEl.disabled = true;
+      } else {
+        websiteUrlEl.disabled = false;
+      }
+    });
+  }
+  // Agency Yes -> reveal monthly fee field
+  document.querySelectorAll('input[name="agency"]').forEach(function(r){
+    r.addEventListener('change', function(){
+      var feeWrap = byId('agencyFeeWrap');
+      if (!feeWrap) return;
+      var sel = document.querySelector('input[name="agency"]:checked');
+      feeWrap.hidden = !(sel && sel.value === 'Yes');
+      if (feeWrap.hidden) { var f = byId('agencyFee'); if (f) f.value = ''; }
+    });
+  });
+  if (step3Btn) {
+    step3Btn.addEventListener('click', function(){
+      var step3Error = byId('step3-error');
+      clearError(step3Error);
+      var websiteUrl = (websiteUrlEl ? websiteUrlEl.value : '').trim();
+      var noWebsite = !!(noWebsiteEl && noWebsiteEl.checked);
+      var gbpSel = document.querySelector('input[name="gbp"]:checked');
+      var gbp = gbpSel ? gbpSel.value : '';
+      var adChannels = Array.from(document.querySelectorAll('input[name="adChannel"]:checked')).map(function(c){ return c.value; });
+      var marketingSpend = (byId('marketingSpend').value || '').trim();
+      var agencySel = document.querySelector('input[name="agency"]:checked');
+      var agency = agencySel ? agencySel.value : '';
+      var agencyFee = (byId('agencyFee').value || '').trim();
+
+      if (!websiteUrl && !noWebsite) { showError(step3Error, 'Either enter your current site URL or check "I don\u2019t have a website yet".'); return; }
+      if (websiteUrl && !/^https?:\/\/[^\s.]+\.[^\s]+/.test(websiteUrl)) { showError(step3Error, 'That doesn\u2019t look like a valid URL. Use https://example.com format.'); return; }
+      if (!gbp) { showError(step3Error, 'Do you have a Google Business Profile?'); return; }
+      if (adChannels.length === 0) { showError(step3Error, 'Pick at least one (or check "None").'); return; }
+      if (!marketingSpend) { showError(step3Error, 'Approximate monthly marketing spend?'); return; }
+      if (!agency) { showError(step3Error, 'Are you currently with a marketing agency?'); return; }
+
+      state.websiteUrl = websiteUrl;
+      state.noWebsite = noWebsite;
+      state.gbp = gbp;
+      state.adChannels = adChannels;
+      state.marketingSpend = marketingSpend;
+      state.agency = agency;
+      state.agencyFee = agencyFee;
+
+      markStepDone(3);
+      activateStep(4);
+    });
+  }
 })();
 </script>
 
