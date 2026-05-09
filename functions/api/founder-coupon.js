@@ -2,18 +2,23 @@
  * GET /api/founder-coupon
  *
  * Returns the next-available founder pricing for the splash counter +
- * checkout-CTA URL. Drives the climbing-price founder mechanic: each of
- * the 50 FOUNDER promotion codes is single-use; this endpoint surfaces
- * the lowest-numbered unredeemed one. Once all 50 are redeemed, founder
- * pricing closes and standard $197 takes over.
+ * /apply eyebrow scarcity counter. Drives the climbing-price founder
+ * mechanic: each of the 100 FOUNDER promotion codes is single-use;
+ * this endpoint surfaces the lowest-numbered unredeemed one. Once all
+ * 100 are redeemed, founder pricing closes and standard $197 takes over.
+ *
+ * Note (v14 splash): the Stripe checkout button on the splash now charges
+ * $197 directly (no promo prefill). Founder pricing is invitation-only
+ * via /apply/. This endpoint still drives the visible counter + the
+ * displayed founder price on both pages.
  *
  * Response shape:
  * {
  *   founderActive: boolean,        // true while at least one FOUNDER code is unredeemed
  *   code: string | null,           // e.g., "FOUNDER12" — null when all redeemed
- *   currentPrice: number,          // dollars; 147..196 while active, 197 once closed
- *   claimedCount: number,          // how many founder slots are taken (0..50)
- *   maxFounders: number,           // 50, surfaced for the UI
+ *   currentPrice: number,          // dollars; 97..196 while active, 197 once closed
+ *   claimedCount: number,          // how many founder slots are taken (0..100)
+ *   maxFounders: number,           // 100, surfaced for the UI
  *   reservedUntil: string | null   // ISO timestamp; null while we trust Stripe-side enforcement
  * }
  *
@@ -24,7 +29,7 @@
  * - "Active and unredeemed" = `active === true && times_redeemed === 0`.
  *   Stripe's max_redemptions=1 setting flips active to false on redemption,
  *   so checking active is sufficient and times_redeemed is belt-and-suspenders.
- * - Cache-Control: 30s public — at <50 founders this is plenty fast and
+ * - Cache-Control: 30s public — at <100 founders this is plenty fast and
  *   protects us from a thundering herd on a viral splash moment without
  *   making the counter feel stale.
  * - On any Stripe error or missing key, we fail soft to standard pricing.
@@ -65,7 +70,7 @@ export async function onRequestGet({ env }) {
     const claimedCount = allFounder.filter((pc) => pc.times_redeemed > 0).length;
 
     if (!next) {
-      // All 50 redeemed — founder pricing closed.
+      // All 100 redeemed — founder pricing closed.
       return jsonResponse({
         founderActive: false,
         code: null,

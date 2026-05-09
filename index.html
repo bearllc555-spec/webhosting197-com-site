@@ -255,7 +255,7 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v23</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v24</span></a>
     <div class="topnav-right">
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
@@ -307,7 +307,7 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
     <p class="price-desc">A single website hosted on global edge infrastructure, built and maintained by AI for the life of your business.</p>
     <p class="price-footnote"><span class="star">*</span>Price for accepted founders only. Apply for invitation to lock in your slot.</p>
 
-    <!-- Stripe paid-founder CTA: locks in current climbing-price founder slot -->
+    <!-- Stripe regular-price beta CTA - charges $197 to anyone, no founder discount. Founder pricing is invitation-only via /apply/. -->
     <a id="stripeCheckout" class="btn btn-primary stripe-cta" href="https://buy.stripe.com/9B628t0oA6kp4ZP8nae3e00" target="_blank" rel="noopener">
       Purchase at regular price. <span class="beta-badge">beta</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -383,9 +383,9 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
 
 <section class="founders" id="founders">
   <h2 class="founders-title">Featured Founders</h2>
-  <p class="founders-sub">As founders join the cohort, they appear here with their site and Founder #N badge. Live registry at <a href="#founders">webhosting197.com/founders</a>.</p>
+  <p class="founders-sub">As founders join the cohort, they appear here with their site and Founder #N badge. Live registry will appear here as the cohort fills.</p>
   <div class="founders-empty">
-    <div class="founders-counter">0 of 50 founders</div>
+    <div class="founders-counter">0 of 100 founders</div>
     <div class="founders-counter-sub">applications open</div>
   </div>
 </section>
@@ -398,7 +398,7 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
   </details>
   <details class="faq-item">
     <summary><span>How do I get an invitation?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
-    <p>Apply through the form above with your business details. We review every application individually and respond within 48 hours either way. Most applicants don&rsquo;t get in &mdash; we hand-pick for fit. The first 50 founders lock in their spot for life.</p>
+    <p>Tap Apply at the top of the page and tell us about your business. We review every application individually and respond within 48 hours either way. Most applicants don&rsquo;t get in &mdash; we hand-pick for fit. The first 100 founders lock in their spot for life.</p>
   </details>
   <details class="faq-item">
     <summary><span>Can I use my own domain?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
@@ -418,7 +418,7 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
   </details>
   <details class="faq-item">
     <summary><span>When does it launch?</span><svg class="faq-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></summary>
-    <p>2026. Apply now and we&rsquo;ll review your application within 48 hours. Accepted applicants are notified the day we open and lock in founder status if they&rsquo;re among the first 50.</p>
+    <p>2026. Apply now and we&rsquo;ll review your application within 48 hours. Accepted applicants are notified the day we open and lock in founder status if they&rsquo;re among the first 100.</p>
   </details>
 </section>
 
@@ -597,7 +597,6 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
     var remEl=document.getElementById('founderRemaining');
     var bar=document.getElementById('founderBarFill');
     var priceEl=document.getElementById('priceAmount');
-    var ctaPriceEl=document.getElementById('ctaPrice');
     var stripeBtn=document.getElementById('stripeCheckout');
     if(!stripeBtn)return;
     fetch('/api/founder-coupon').then(function(r){return r.json();}).then(function(j){
@@ -609,7 +608,6 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
       var ebSpots=document.getElementById('eyebrowSpots');
       if(ebSpots)ebSpots.textContent=remaining+' of '+maxF;
       if(bar)bar.style.width=(claimed/maxF*100)+'%';
-      if(ctaPriceEl)ctaPriceEl.textContent=price;
       // Pass the current price to the count-up animation; if the animation
       // module loaded, it'll start as soon as the element scrolls into view.
       if(typeof window.__priceCountUpReady === 'function') window.__priceCountUpReady(price);
@@ -709,15 +707,7 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
     if(closeBtn)closeBtn.addEventListener('click',closeMenu);
     // Close menu when any link inside is clicked
     menu.querySelectorAll('a').forEach(function(a){
-      a.addEventListener('click',function(){
-        // If it's the Get-notified CTA, also focus the email input after scroll
-        var isCta=a.classList.contains('mobile-menu-cta');
-        closeMenu();
-        if(isCta){
-          var emailInput=document.getElementById('emailInput');
-          if(emailInput)setTimeout(function(){emailInput.focus({preventScroll:true});},700);
-        }
-      });
+      a.addEventListener('click',closeMenu);
     });
     // Close on Escape
     document.addEventListener('keydown',function(e){
