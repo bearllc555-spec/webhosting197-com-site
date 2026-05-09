@@ -70,10 +70,10 @@
   .mobile-menu-close svg{width:22px;height:22px}
   .mobile-menu-close:hover{background:var(--bg-card)}
   .mobile-menu-nav{display:flex;flex-direction:column;gap:0;max-width:480px;margin:0 auto}
-  .mobile-menu-link{font-size:22px;font-weight:600;color:var(--ink);padding:20px 0;border-bottom:1px solid var(--rule);text-decoration:none;display:block;letter-spacing:-.02em}
-  .mobile-menu-link:hover{color:var(--blue)}
-  .mobile-menu-cta{display:flex;align-items:center;justify-content:space-between;margin-top:28px;background:var(--blue);color:#fff;padding:18px 22px;border-radius:12px;font-size:17px;font-weight:600;text-decoration:none;letter-spacing:-.01em}
-  .mobile-menu-cta:hover{background:var(--blue-deep)}
+  .mobile-menu-link{font-size:22px;font-weight:600;color:var(--ink);padding:20px 0;border-bottom:1px solid var(--rule);text-decoration:none;display:block;letter-spacing:-.02em;transition:opacity .15s}
+  .mobile-menu-link:hover{opacity:.6}
+  .mobile-menu-cta{display:flex;align-items:center;justify-content:space-between;margin-top:28px;background:var(--ink);color:#fff;padding:18px 22px;border-radius:12px;font-size:17px;font-weight:600;text-decoration:none;letter-spacing:-.01em;transition:opacity .15s}
+  .mobile-menu-cta:hover{opacity:.85}
   .mobile-menu-cta svg{width:14px;height:14px}
 
   @media(max-width:600px){
@@ -237,7 +237,7 @@
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v19</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v20</span></a>
     <div class="topnav-right">
       <a href="/#pricing" class="topnav-link">Pricing</a>
       <a href="/#how" class="topnav-link">How it works</a>
