@@ -237,7 +237,7 @@
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v25</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v26</span></a>
     <div class="topnav-right">
       <a href="/#pricing" class="topnav-link">Pricing</a>
       <a href="/#how" class="topnav-link">How it works</a>
@@ -1499,20 +1499,35 @@ window.GOOGLE_PLACES_API_KEY = 'AIzaSyCg5UiMVT6Zr0wNBl_1vuhWmUeTvyfTsso';
     if (gpInput) gpInput.focus();
   }
 
-  function gpFetchPredictions(query) {
+  async function gpFetchPredictions(query) {
     if (!gpAutocompleteSvc || !query || query.length < 2) { gpClearSuggestions(); return; }
     if (!gpSessionToken && window.google && window.google.maps && window.google.maps.places) {
       gpSessionToken = new window.google.maps.places.AutocompleteSessionToken();
     }
-    gpAutocompleteSvc.getPlacePredictions({
-      input: query,
-      types: ['(cities)'],
-      componentRestrictions: { country: 'us' },
-      sessionToken: gpSessionToken
-    }, function(predictions, status){
-      if (status !== 'OK' || !predictions) { gpClearSuggestions(); return; }
+    try {
+      var response = await window.google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        input: query,
+        includedPrimaryTypes: ['locality', 'administrative_area_level_3'],
+        includedRegionCodes: ['us'],
+        sessionToken: gpSessionToken
+      });
+      var suggestions = (response && response.suggestions) || [];
+      // Adapt to legacy format expected by gpRenderSuggestions
+      var predictions = suggestions.map(function(s){
+        var pred = s.placePrediction;
+        if (!pred) return null;
+        return {
+          description: pred.text ? pred.text.toString() : '',
+          structured_formatting: {
+            main_text: pred.mainText ? pred.mainText.toString() : '',
+            secondary_text: pred.secondaryText ? pred.secondaryText.toString() : ''
+          }
+        };
+      }).filter(Boolean);
       gpRenderPredictions(predictions);
-    });
+    } catch (e) {
+      gpClearSuggestions();
+    }
   }
 
   // alias - readability
@@ -1546,11 +1561,11 @@ window.GOOGLE_PLACES_API_KEY = 'AIzaSyCg5UiMVT6Zr0wNBl_1vuhWmUeTvyfTsso';
   function gpInitWhenReady() {
     if (!window.google || !window.google.maps || !window.google.maps.places) return;
     try {
-      gpAutocompleteSvc = new window.google.maps.places.AutocompleteService();
+      // Mark places-ready so input handler will use the new API
+      gpAutocompleteSvc = window.google.maps.places.AutocompleteSuggestion ? 'new' : null;
       gpInitInputHandlers();
       if (gpHelpText) gpHelpText.textContent = 'Type a city, pick from the suggestions. Add as many as apply.';
     } catch (e) {
-      // Fallback to plain input if Places init fails
       gpAutocompleteSvc = null;
     }
   }
