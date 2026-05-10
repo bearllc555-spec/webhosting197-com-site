@@ -230,7 +230,7 @@
           class="composer-input"
           id="composerInput"
           rows="2"
-          placeholder='Click any section in the preview, then describe the change. Or just type  &ldquo;make the headline green&rdquo;.'></textarea>
+          placeholder='Click any section in the preview, then describe the change. Or just type — &ldquo;make the headline green&rdquo;.'></textarea>
         <div class="composer-foot">
           <span> to send · Shift+ for new line</span>
           <button class="btn btn-primary composer-send" id="composerSend">Send</button>
@@ -290,11 +290,11 @@
 "use strict";
 
 /* ============================================================
- * Press editor  client-side controller
+ * Press editor — client-side controller
  *
  * State:
- *   currentSite  the customer's site.json as it is right now
- *   history      array of { siteJson, narration, timestamp, isLaunch? }
+ *   currentSite — the customer's site.json as it is right now
+ *   history     — array of { siteJson, narration, timestamp, isLaunch? }
  *
  * Flow:
  *   User types request  POST /api/edit with {siteJson, request}
@@ -307,7 +307,7 @@
  * ============================================================ */
 
 // Bootstrap with Jack's Plumbing fixture (in real product this is loaded from
-// the customer's per-customer git repo  for V1 demo it's hard-coded).
+// the customer's per-customer git repo — for V1 demo it's hard-coded).
 const INITIAL_SITE = {
   meta: {
     customer_slug: "jacks-plumbing",
@@ -337,7 +337,7 @@ const INITIAL_SITE = {
     voice: "friendly"
   },
   services: [
-    { name: "Emergency Repair", description: "24/7 burst pipes, leaks, and clogs handled fast  most calls resolved within 90 minutes." },
+    { name: "Emergency Repair", description: "24/7 burst pipes, leaks, and clogs handled fast — most calls resolved within 90 minutes." },
     { name: "Water Heater", description: "Repair and replacement for tank and tankless water heaters. Same-day service when stocked." },
     { name: "Drain Cleaning", description: "Hydro-jetting and snaking for kitchen, bathroom, and main-line clogs." },
     { name: "Fixture Install", description: "Faucets, toilets, garbage disposals, and full bathroom remodels." }
@@ -441,7 +441,7 @@ async function sendRequest() {
 // Re-fire a previously-failed request without making the customer re-type or
 // re-select. Used by the Retry button on chat error bubbles. The existing
 // error bubble (errorEl) is updated in place rather than spawning a new
-// stacked bubble  failed retries should not pile up.
+// stacked bubble — failed retries should not pile up.
 async function retryRequest(originalText, payload, errorEl) {
   $send.disabled = true;
   const thinking = appendThinkingMessage();
@@ -487,7 +487,7 @@ async function retryRequest(originalText, payload, errorEl) {
 //   - network_error: fetch threw or response wasn't parseable as expected
 //
 // NOTE: this used to auto-retry once after 1.2s on rate_limited. Removed in
-// Step 1.6  Cloudflare's edge rate-limit windows EXTEND when you keep
+// Step 1.6 — Cloudflare's edge rate-limit windows EXTEND when you keep
 // hitting them, so an internal auto-retry was making blocks worse rather than
 // recovering from them. Retries are now driven exclusively by the customer
 // clicking the Retry button (which has its own 60s cooldown to throttle abuse).
@@ -549,7 +549,7 @@ const ICON_RETRY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const ICON_COPY  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
 const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
 
-// appendErrorMessage(text, actions?)  actions is optional and may include:
+// appendErrorMessage(text, actions?) — actions is optional and may include:
 //   - onRetry:           callback fired when the retry button is clicked.
 //                        Receives the bubble element so a retry can update
 //                        the SAME bubble in place rather than stacking a new one.
@@ -574,7 +574,7 @@ function appendErrorMessage(msg, actions) {
   return el;
 }
 
-// updateErrorBubble(el, text, actions?)  REPLACE the contents of an existing
+// updateErrorBubble(el, text, actions?) — REPLACE the contents of an existing
 // error bubble in place rather than appending a new one. Used by retryRequest
 // when a retry fails again so we don't accumulate a column of duplicate errors.
 function updateErrorBubble(el, msg, actions) {
@@ -703,7 +703,7 @@ function appendAssistantMessage(payload) {
     html += `<div class="warnings">Heads up: ${escapeHtml(validationError)}. Apply may produce unexpected results.</div>`;
   }
 
-  // actions (skipped for color-picker case  picker has its own Apply/Discard)
+  // actions (skipped for color-picker case — picker has its own Apply/Discard)
   if (diff && diff.length > 0 && !isColorPicker) {
     html += `
       <div class="msg-actions">
@@ -798,7 +798,7 @@ function applyDiff(narration, proposedSite, btn, diffOps) {
 
   // If everything was a no-op, don't pretend we changed anything.
   if (meaningfulOps.length === 0) {
-    actions.innerHTML = `<span style="font-size:0.8rem; color:var(--slate)">No change needed  values already match.</span>`;
+    actions.innerHTML = `<span style="font-size:0.8rem; color:var(--slate)">No change needed — values already match.</span>`;
     return;
   }
 
@@ -840,7 +840,7 @@ function applyDiff(narration, proposedSite, btn, diffOps) {
 // AI is unreliable at exact color matching ("hot pink" -> burgundy was the
 // motivating failure). Instead of asking the AI to nail the shade, we let it
 // pick a starting suggestion and let the customer point at the exact swatch
-// they want. Click-to-preview only  Apply commits the single history entry,
+// they want. Click-to-preview only — Apply commits the single history entry,
 // Discard reverts the iframe, new chat message auto-discards.
 
 let activeColorPicker = null;
@@ -932,7 +932,7 @@ function openColorPicker(payload, msgEl) {
     });
   });
 
-  // Wire hex input  preview as soon as the typed value is a valid 6-char hex
+  // Wire hex input — preview as soon as the typed value is a valid 6-char hex
   const hexInput = wrap.querySelector(".cp-hex-input");
   hexInput.addEventListener("input", () => {
     let v = hexInput.value.trim();
@@ -966,7 +966,7 @@ function selectColorInPicker(state, hex) {
   });
 }
 
-// Set the relevant CSS variable on the iframe :root. Pure preview  no diff
+// Set the relevant CSS variable on the iframe :root. Pure preview — no diff
 // stack write, no history entry. Mirror of applyOpToIframe's color branch.
 function applyColorToIframe(path, hex) {
   const doc = $iframe.contentDocument;
@@ -1012,7 +1012,7 @@ function discardColorPicker(state) {
 }
 
 // Generate 5 similar swatches by walking lightness up and down around AI's pick.
-// Saturation and hue stay fixed  gives the customer "same color, lighter/darker"
+// Saturation and hue stay fixed — gives the customer "same color, lighter/darker"
 // rather than wandering into adjacent hues.
 function generateSimilarShades(hex) {
   const hsl = hexToHsl(hex);
@@ -1093,7 +1093,7 @@ function readSitePath(obj, path) {
 
 // Given a diff op, return the DOM elements inside the iframe whose visible state
 // reflects the schema field at that path. Powers the A5 pulse + count display.
-// Mirrors the selector logic in applyOpToIframe  keep these two functions in sync.
+// Mirrors the selector logic in applyOpToIframe — keep these two functions in sync.
 function findElementsAffectedByOp(doc, op) {
   if (op.op !== "set") return [];
   const path = op.path;
@@ -1117,7 +1117,7 @@ function findElementsAffectedByOp(doc, op) {
     return Array.from(doc.querySelectorAll(".footer-tagline"));
   }
 
-  // sections[N].props.<field>  single element inside the tagged section
+  // sections[N].props.<field> — single element inside the tagged section
   const sectionMatch = path.match(/^sections\[(\d+)\]\.props\.([\w_]+)$/);
   if (sectionMatch) {
     const idx = parseInt(sectionMatch[1], 10);
@@ -1204,7 +1204,7 @@ function patchIframePreview(site) {
       }
     }
   } catch (err) {
-    // Iframe may be from different origin  we can't patch it. That's OK
+    // Iframe may be from different origin — we can't patch it. That's OK
     // for V1; the Apply still updates state. In production we'd trigger
     // a full server-side re-render and reload the iframe URL.
     console.warn("Iframe patch failed (likely cross-origin); state updated only.", err);
@@ -1322,7 +1322,7 @@ $input.addEventListener("keydown", (e) => {
   }
 });
 
-// Bulletproof placeholder hide on focus  clear the placeholder attribute
+// Bulletproof placeholder hide on focus — clear the placeholder attribute
 // outright on focus, restore it on blur. The CSS-only approach
 // (.composer-input:focus::placeholder { color: white }) doesn't render
 // reliably in some browsers; this guarantees the gray hint vanishes the
@@ -1363,7 +1363,7 @@ function relativeTime(ts) {
  *
  * Three states map to two visual representations:
  *   - "saved" (no local diffs):           green dot + "Saved"
- *   - "local" (localStorage has diffs):   amber dot + "Local changes  not yet published"
+ *   - "local" (localStorage has diffs):   amber dot + "Local changes — not yet published"
  *   - "transient" (just-applied toast):   amber dot + "<short toast>" for 3.5s, then re-derive
  *
  * Step 5 will add a real "published" state once KV-backed /api/apply is wired.
@@ -1375,7 +1375,7 @@ function updateSaveStatus() {
   const stack = loadDiffStack();
   if (stack.length > 0) {
     $saveStatus.classList.add("local");
-    $saveStatusText.textContent = "Local changes  not yet published";
+    $saveStatusText.textContent = "Local changes — not yet published";
   } else {
     $saveStatus.classList.remove("local");
     $saveStatusText.textContent = "Saved";
@@ -1403,7 +1403,7 @@ function flashSaveStatus(msg) {
  *
  * Step 5 will replace this with a KV-backed /api/apply Function that re-renders
  * the preview server-side. Until then, the localStorage layer is the source
- * of truth for "what's locally changed"  it powers the topbar truth-state and
+ * of truth for "what's locally changed" — it powers the topbar truth-state and
  * survives refresh.
  *
  * Storage key: "press:<customer-slug>:diffs"  (scoped per customer)
@@ -1480,7 +1480,7 @@ function applyOpToIframe(doc, op) {
   // Phone number  all phone buttons + footer tel: link
   if (path === "business.contact.phone") {
     const telHref = "tel:" + String(value).replace(/[^\d+]/g, "");
-    // Buttons that show "Call (NNN) NNN-NNNN"  replace the phone fragment in textContent
+    // Buttons that show "Call (NNN) NNN-NNNN" — replace the phone fragment in textContent
     doc.querySelectorAll(".nav-cta, .hero-cta, .cta-btn").forEach((el) => {
       const phoneRegex = /\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
       // Walk text nodes so we don't blow away child SVG arrows
@@ -1571,7 +1571,7 @@ $navForward.addEventListener("click", () => {
   try { $iframe.contentWindow.history.forward(); } catch (e) { /* noop */ }
 });
 $navReload.addEventListener("click", () => {
-  // Always go back to the original Jack's Plumbing preview  protects the
+  // Always go back to the original Jack's Plumbing preview — protects the
   // user when a stray click navigated the iframe away.
   $iframe.src = INITIAL_IFRAME_SRC;
 });
@@ -1580,9 +1580,9 @@ $navReload.addEventListener("click", () => {
  *
  * Two levels of targeting:
  *   - Level 1 (parent section): green hover + selected. Click any section in
- *     the iframe  pill says "Editing: <label>". Sets selectedTarget.
+ *     the iframe — pill says "Editing: <label>". Sets selectedTarget.
  *   - Level 2 (sub-element inside a selected parent): amber hover + selected.
- *     Click sub-element AFTER parent is selected  pill says "Editing:
+ *     Click sub-element AFTER parent is selected — pill says "Editing:
  *     <child label>". Parent stays in faded green. Sets selectedSubTarget.
  *
  * Click outside any section clears both.
@@ -1604,7 +1604,7 @@ const SECTION_SELECTORS = [
 ];
 
 // Per-parent-type sub-element selectors, in priority order. The first match
-// wins  so put more specific selectors before broader ones.
+// wins — so put more specific selectors before broader ones.
 const SUB_SELECTORS_BY_PARENT = {
   hero: [
     { selector: "h1",            kind: "headline",     label: () => "the main headline" },
@@ -1686,7 +1686,7 @@ function setupSectionTargeting() {
     /* ---- Step 2: inline text editing ---- */
     "[data-press-text-edit] { cursor: text; }",
     "[data-press-text-edit]:hover { cursor: text; }",
-    /* press-editing matches press-sub-selected  same amber border + glow halo
+    /* press-editing matches press-sub-selected — same amber border + glow halo
        so the customer sees one consistent "this is your focus" treatment, no
        matter whether the click landed in a directly-editable text field or an
        AI-targetable container. */
@@ -1715,7 +1715,7 @@ function setupSectionTargeting() {
   ].join("\n");
   doc.head.appendChild(style);
 
-  // Tag each known section + sub-elements (data attributes only  no per-element
+  // Tag each known section + sub-elements (data attributes only — no per-element
   // click listeners; we delegate from doc.body below).
   let parentIdx = 0;
   SECTION_SELECTORS.forEach((spec) => {
@@ -1759,11 +1759,11 @@ function setupSectionTargeting() {
   //   5. Click outside any tag  clear all selection
   // Capture phase + stopPropagation beats any internal page handlers.
   doc.body.addEventListener("click", (e) => {
-    // 1. Click inside the active editor  let the browser handle cursor placement
+    // 1. Click inside the active editor — let the browser handle cursor placement
     if (activelyEditing && activelyEditing.el && activelyEditing.el.contains(e.target)) {
       return;
     }
-    // Different element clicked  if there's an active edit, commit it first
+    // Different element clicked — if there's an active edit, commit it first
     if (activelyEditing) commitInlineEdit();
 
     // 2. Inline text edit
@@ -1796,7 +1796,7 @@ function setupSectionTargeting() {
       return;
     }
 
-    // 5. Click outside any tagged thing  clear AI selection
+    // 5. Click outside any tagged thing — clear AI selection
     clearSelection();
   }, true /* capture */);
 }
@@ -1842,7 +1842,7 @@ function selectSubElement(subEl, parentEl) {
 
 /* ---------- inline text editing (Step 2) ----------
  *
- * Direct manipulation of text in the iframe  Word/Docs pattern. Click a
+ * Direct manipulation of text in the iframe — Word/Docs pattern. Click a
  * text-bearing element, cursor lands, type to edit. Enter or click-outside
  * commits; Esc reverts. NO AI roundtrip for text changes.
  *
@@ -1921,7 +1921,7 @@ function tagEditableTexts(doc) {
       tagText(section.querySelector(".footer-address, .footer-link.footer-address"),
         { kind: "footer_address", label: "the footer address",
           path: "business.contact.address", multiline: true });
-      // Footer tel link  editing just changes the displayed phone, but the
+      // Footer tel link — editing just changes the displayed phone, but the
       // commit handler also writes business.contact.phone + the href below.
       const telLink = section.querySelector(".footer-link[href^='tel:']");
       if (telLink) {
@@ -1932,7 +1932,7 @@ function tagEditableTexts(doc) {
     }
   });
 
-  // Step 3: button labels  hero CTA, cta-section CTA, header phone button.
+  // Step 3: button labels — hero CTA, cta-section CTA, header phone button.
   // Buttons contain an SVG icon child that shouldn't be exposed to
   // contenteditable; isButton triggers the SVG-stash dance in enterInlineEdit.
   // The header's nav-cta is just the phone number (no "Call " prefix), so it
@@ -1942,7 +1942,7 @@ function tagEditableTexts(doc) {
     const type = section.getAttribute("data-press-type");
 
     if (type === "header") {
-      // Header phone button  text IS the phone number, write directly to
+      // Header phone button — text IS the phone number, write directly to
       // business.contact.phone. isPhone triggers tel-href + cross-page sync.
       Array.from(section.querySelectorAll(".nav-cta, .btn")).forEach((btn) => {
         if (btn.hasAttribute("data-press-text-edit")) return;
@@ -1992,7 +1992,7 @@ function enterInlineEdit(el) {
 
   // Update the chat pill so the customer sees exactly what's targeted, even
   // when they're directly typing into the element. Both flows (direct edit
-  // and chat-driven edit) target the same element  the pill reflects that.
+  // and chat-driven edit) target the same element — the pill reflects that.
   const doc = $iframe.contentDocument;
   if (doc) {
     doc.querySelectorAll(".press-selected, .press-parent-faded, .press-sub-selected")
@@ -2035,13 +2035,13 @@ function enterInlineEdit(el) {
   const originalText = info.multiline ? el.textContent : el.textContent.trim();
 
   // contenteditable=plaintext-only blocks pasted markup (Word junk) and rich
-  // input  we just want a plain text field. Falls back gracefully on browsers
+  // input — we just want a plain text field. Falls back gracefully on browsers
   // that don't support plaintext-only (it'll behave like contenteditable=true).
   el.setAttribute("contenteditable", "plaintext-only");
   el.classList.add("press-editing");
   el.dataset.pressOriginalText = originalText;
 
-  // Focus on next tick  lets the click event finish first so the cursor lands
+  // Focus on next tick — lets the click event finish first so the cursor lands
   // at the click position naturally.
   setTimeout(() => {
     el.focus();
@@ -2055,7 +2055,7 @@ function enterInlineEdit(el) {
         sel.removeAllRanges();
         sel.addRange(range);
       }
-    } catch (e) { /* selection not available  ignore */ }
+    } catch (e) { /* selection not available — ignore */ }
   }, 0);
 
   const keydownListener = (e) => {
@@ -2094,7 +2094,7 @@ function commitInlineEdit() {
   activelyEditing = null;
 
   // Unprotect SVG (the cursor can land on it normally again outside edit mode).
-  // The SVG was never removed from the DOM  only marked contenteditable="false" 
+  // The SVG was never removed from the DOM — only marked contenteditable="false" —
   // so there's nothing to re-append; just clean up the attribute.
   if (info.isButton && el._pressProtectedSVG) {
     el._pressProtectedSVG.removeAttribute("contenteditable");
@@ -2104,7 +2104,7 @@ function commitInlineEdit() {
   // No-op if unchanged
   if (newValue === originalText) return;
 
-  // Empty value would visually blank the element forever  refuse the edit
+  // Empty value would visually blank the element forever — refuse the edit
   // and restore the original. A customer fat-fingering Backspace shouldn't
   // be able to silently destroy their headline.
   if (newValue.length === 0) {
