@@ -13,7 +13,7 @@
 <meta property="og:description" content="one less bill to worry about. for life. Lifetime cloud hosting, hand-picked customers only.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://webhosting197.com/">
-<meta property="og:image" content="https://webhosting197.com/img/og.png?v=48">
+<meta property="og:image" content="https://webhosting197.com/img/og.png?v=49">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/png">
@@ -21,7 +21,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="webhosting197 - one less bill to worry about. for life.">
 <meta name="twitter:description" content="$197 once. Lifetime cloud hosting. Built and maintained by AI. Hand-picked customers only.">
-<meta name="twitter:image" content="https://webhosting197.com/img/og.png?v=48">
+<meta name="twitter:image" content="https://webhosting197.com/img/og.png?v=49">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -30,7 +30,7 @@
   "alternateName": "webhosting197.com",
   "url": "https://webhosting197.com",
   "logo": "https://webhosting197.com/favicon.svg",
-  "image": "https://webhosting197.com/img/og.png?v=48",
+  "image": "https://webhosting197.com/img/og.png?v=49",
   "description": "Lifetime cloud web hosting. $197 once. Built and maintained by AI for the life of your business. Hand-picked customers only.",
   "slogan": "one less bill to worry about. for life.",
   "founder": {
@@ -147,8 +147,10 @@ body.menu-open .topnav-burger span:nth-child(3){transform:translateY(-6px) rotat
   .mobile-menu{display:none}
 }
 
-/* HERO */
-.hero{padding:96px 32px 32px;text-align:center;max-width:var(--max);margin:0 auto}
+/* HERO — light scrim over WebGL canvas so ink text stays readable */
+.hero{padding:96px 32px 32px;text-align:center;max-width:var(--max);margin:0 auto;position:relative;isolation:isolate}
+.hero::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 100% 90% at 50% 12%,rgba(255,255,255,.96) 0%,rgba(255,255,255,.78) 42%,rgba(255,255,255,.4) 100%)}
+.hero .eyebrow,.hero h1,.hero .lead{position:relative;z-index:1}
 .eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem .85rem;background:var(--bg-card);border:1px solid var(--rule-strong);border-radius:999px;font-size:12.5px;font-weight:500;color:var(--ink-soft);margin-bottom:32px}
 .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);animation:dotPulse 2.4s ease-out infinite}
 @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
@@ -359,7 +361,7 @@ h1{font-size:38px;font-weight:700;letter-spacing:-.025em;line-height:1.15;color:
 
 <header class="topnav" id="topnav">
   <div class="topnav-inner">
-    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v48</span></a>
+    <a href="/" class="brand"><span class="brand-slash">/</span><span class="brand-text">webhosting</span><span class="brand-num">197</span><span class="version">v49</span></a>
     <div class="topnav-right">
       <a href="#pricing" class="topnav-link">Pricing</a>
       <a href="#how" class="topnav-link">How it works</a>
@@ -977,17 +979,14 @@ if (!el || reduced) {
   try {
     g = new GlassRipple({
       canvas: el,
-      background: "#E8EDF7",
-      icon: claude.icon,
-      wave: { damping: 0.79, speed: 1.08, radius: 0.032, intensity: 26, momentum: 0.4, steps: 2 },
+      background: "#FFFFFF",
+      icon: { ...claude.icon, scale: 0.32, color: "#2563EB" },
+      wave: { damping: 0.82, speed: 1.05, radius: 0.038, intensity: 22, momentum: 0.45, steps: 2 },
       effects: {
-        halftone: [
-          { tint: [0.08, 0.14, 0.32], mix: 0.22, scale: 0.48, angle: -0.09 },
-          { tint: [0.18, 0.42, 0.88], mix: 0.26, scale: 0.74, angle: 0.05 }
-        ],
-        chromab: { amount: 0.14 },
-        retroScreen: { cellScale: 0.02, glow: 0.38 },
-        vignette: { intensity: 0.62 }
+        halftone: false,
+        chromab: { amount: 0.035 },
+        retroScreen: false,
+        vignette: { intensity: 0.18 }
       }
     });
     g.setTint("#2563EB");
