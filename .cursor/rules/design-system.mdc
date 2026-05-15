@@ -1,0 +1,71 @@
+---
+description: webhosting197 visual language - canonical brand tokens for webhosting197-com-site
+globs: ["**/*.css", "**/*.html"]
+---
+
+# webhosting197 design system (webhosting197-com-site repo)
+
+This rule encodes the canonical brand tokens for **webhosting197.com** - a Bear LLC product brand offering $197 once, lifetime cloud hosting, hand-picked customers only. The token set is intentionally near-identical to slatepress.co (parent SlatePress brand) - shared brand DNA, distinct product positioning.
+
+The source of truth for these tokens is the `:root` block at the top of `index.html`. If they ever drift, this rule should be updated to match - the live file wins.
+
+## Canonical tokens
+
+```css
+:root{
+  /* Backgrounds */
+  --bg:        #FFFFFF;     /* page canvas - pure white */
+  --bg-soft:   #FAFAFA;     /* secondary surface */
+  --bg-card:   #F7F7F5;     /* card surfaces, subtle warm tint */
+
+  /* Text */
+  --ink:       #1C1B1F;     /* primary text - near-black with subtle warm undertone */
+  --ink-soft:  #5C5C66;     /* secondary text */
+  --slate:     #85858C;     /* tertiary text */
+
+  /* Borders / rules */
+  --rule:      #E8E8E8;     /* default 1px borders */
+  --rule-soft: #F0F0F0;     /* subtle dividers */
+  --rule-strong:#1C1B1F;    /* emphasized borders (matches --ink) */
+
+  /* Brand blue */
+  --blue:      #2563EB;     /* PRIMARY brand blue - logo "/" + primary CTAs */
+  --blue-deep: #1D4ED8;     /* hover state */
+  --blue-soft: #EFF6FF;     /* tinted backgrounds */
+
+  /* Semantic */
+  --emerald:   #059669;     /* success / live-status / scarcity-dot pulse */
+
+  /* Layout */
+  --max:       1080px;      /* content max-width */
+}
+```
+
+## Type stack
+
+**Inter only.** Single sans-serif throughout.
+
+```css
+font-family: 'Inter', -apple-system, system-ui, sans-serif;
+```
+
+## Cardinal rules for webhosting197-com-site
+
+- **Pure white canvas (`--bg`).** Same Mercury-clean canvas as slatepress.co. Backgrounds step down to `--bg-soft` for alternating sections and `--bg-card` for cards.
+- **Brand blue (`--blue` #2563EB) is the one accent.** Logo `/`, primary CTAs, focus rings.
+- **`--emerald` is reserved for live-status.** The "founder-remaining" scarcity counter, the pulsing dot indicators, and any "live"/"available" semantic moments. NOT a decorative color.
+- **High contrast.** Body text against `--bg` should hit WCAG AAA (7:1 ratio). The `--ink` palette has a subtle warm undertone - matches slatepress.co exactly.
+- **No new hex codes.** Drift from slatepress.co tokens is the failure mode. If a token changes here, raise the question whether it should change on slatepress.co too (probably yes - they're sister brands).
+- **No gradient buttons, no carousels, no Lorem ipsum, no emoji in production UI.**
+
+## Pricing
+
+webhosting197 has its own product pricing ($197 once, lifetime; Founder cohort cap at 100) - distinct from SlatePress Foundation pricing. No cross-repo pricing-sync rule applies to slatepress.co. The product name itself encodes the price ($197), so any pricing change is also a domain-rebrand problem.
+
+## When designing or reviewing UI in this repo
+
+Defer to the `premium-web-designer` Claude skill. When it fires:
+1. Ask "What are we designing today?"
+2. On the answer "webhosting197.com" or any edit in this repo, load the tokens above.
+3. Apply universal taste principles on top.
+4. Produce code that references the brand's variable names (`--blue`, `--ink`, `--bg-card`) directly - never invent token names.

@@ -1,0 +1,26 @@
+---
+description: Never push directly to main on webhosting197-com - branch previews mandatory
+alwaysApply: true
+---
+
+# Branch previews are mandatory
+
+This repo auto-deploys to production (`webhosting197.com`) on every push to `main`. To prevent breaking the live site:
+
+- Every code change goes to a feature branch FIRST (`fix/...`, `feature/...`, `polish/...`).
+- Cloudflare Pages auto-deploys feature branches to `<branch-slug>.webhosting197-com.pages.dev` (slashes in branch names become dashes).
+- Anthony reviews the preview URL before merging to `main`.
+- README.md and dotfile-only commits (`.cursor/`, `.gitignore`, `.github/`) are exempt - they don't affect the deployed site.
+
+When Claude makes changes here, the default workflow is: create branch -> commit -> push -> surface preview URL -> wait for Anthony's go-ahead before merging to main.
+
+This rule was forged on 2026-05-11 (across the SlatePress portfolio) after 5+ hours lost to a broken live site from a direct-to-main push on slatepress.co.
+
+## Prerequisite: branch-preview wiring in deploy.yml
+
+For branch previews to actually fire, the GitHub Actions workflow at `.github/workflows/deploy.yml` must:
+
+- Trigger on `branches: ['**']` (not just `['main']`).
+- Pass `--branch=${{ github.ref_name }}` to `wrangler pages deploy` (so non-main branches deploy to preview URLs, not prod).
+
+If those two lines are wrong, branches just sit on GitHub doing nothing visible. See sister repo `slatepress-site` for the canonical YAML shape.

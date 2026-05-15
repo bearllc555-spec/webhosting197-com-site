@@ -1,0 +1,24 @@
+---
+description: Commit message + cadence rules for Cloudflare Pages auto-deploy
+alwaysApply: true
+---
+
+# Commit discipline
+
+## ASCII-only commit messages
+
+Cloudflare Pages deployments API rejects non-ASCII commit messages. The asset upload succeeds, but the deployment-record creation fails with `[code: 8000111] Invalid commit message, it must be a valid UTF-8 string` if the message contains:
+
+- Em-dashes (U+2014) - use straight hyphens instead
+- Curly quotes (smart punctuation U+2018-201D) - use straight quotes
+- Sparkles, emoji, any non-ASCII characters
+
+Compose every commit message in plain ASCII from the start. If a non-ASCII message slips through, the fix is `git commit --amend -m "<plain ASCII>"` + `git push --force-with-lease`.
+
+## One commit per change, never two within ~10 seconds
+
+CF Pages dedups the second commit if two land within ~10 seconds. If a follow-up tweak is needed, wait at least 15 seconds OR squash into a single commit before pushing.
+
+## Conventional commit prefixes
+
+Use `fix:`, `feat:`, `chore:`, `polish:`, `docs:` as prefixes when reasonable. Keeps git log scannable.
